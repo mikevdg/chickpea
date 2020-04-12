@@ -1,6 +1,5 @@
 .datatable {
-    border:'1px solid grey';
-    border-collapse:'collapse';
+    border:'1px solid red';
 }
 
 .datatable-head {
@@ -11,6 +10,43 @@
     border: 1px solid gray;
 }
 
+.datatable-table {
+    border-collapse:collapse;
+}
+
 .datatable-cell {
-    border: 1px solid gray;
+    border: 1px solid red;
+}
+
+.datatable-wrapperdiv {
+}
+
+.datatable-scrollwrapperdiv {
+    display:grid;
+    height:300px;
+    width:300px;
+}
+
+.datatable-scrolldiv {
+    overflow-y: scroll;
+    grid-column:1;
+    grid-row:1;
+    z-index:2;
+    pointer-events:none;
+    margin-top:47px;
+    margin-bottom:12px;
+}
+
+.datatable-scroll-fakecontents {
+    height:10000px;
+    width:100%;
+}
+
+.datatable-contentsdiv {
+    overflow-x:auto;
+    overflow-y:hidden;
+    grid-column:1;
+    grid-row:1;
+    z-index:1;
+    margin-right:12px;
 }
