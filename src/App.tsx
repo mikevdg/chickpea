@@ -1,23 +1,33 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import './DataTable.css';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.tsx</code> and save to reload.
+          <table className="datatable">
+            <thead className="datatable-head">
+              <tr>
+                <th rowSpan={2}>Column A</th>
+                <th colSpan={2}>Column B</th> 
+              </tr>
+              <tr>
+                <th>
+                  <th rowSpan={2}>Column B1</th>
+                  <th colSpan={2}>Column B2</th>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="datatablecell">One</td>
+                <td>Two</td>
+              </tr>
+            </tbody>
+          </table>
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
       </header>
     </div>
   );

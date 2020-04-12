@@ -1,0 +1,16 @@
+.datatable {
+    border:'1px solid grey';
+    border-collapse:'collapse';
+}
+
+.datatable-head {
+    background-color:darkgrey;
+}
+
+.datatable-head-cell {
+    border: 1px solid gray;
+}
+
+.datatable-cell {
+    border: 1px solid gray;
+}
