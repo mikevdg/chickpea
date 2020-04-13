@@ -1,24 +1,23 @@
 import React from 'react';
+import * as WebRequest from 'web-request';
+import * as OData from './odata/odata';
+
 import './App.css';
 import './DataTable.css';
 
-function columns() {
-  return (
-    Array.from(Array(100).keys()).map((each) =>
-      <tr>
-        <td className="datatable-cell">One {each}</td>
-        <td className="datatable-cell">Two {each}</td>
-        <td className="datatable-cell">Three {each}</td>
-      </tr>
-    )
-  )
-}
-
 function App() {
+  httpGetSchema().then(
+    (response) => 
+      OData.asTable(response.content, 'foo')
+    ,
+    (error) => console.log("Error: "+error));
+ 
+  
+
   return (
     <div className="App">
-      <header className="App-header">
-        <p>
+      
+       
 
           <div className="datatable">
 
@@ -53,10 +52,29 @@ function App() {
 
             </div>
           </div>
-        </p>
-      </header>
+     
+     
     </div>
   );
 }
 
-export default App;
+function columns() {
+  return (
+    Array.from(Array(100).keys()).map((each) =>
+      <tr>
+        <td className="datatable-cell">One {each}</td>
+        <td className="datatable-cell">Two {each}</td>
+        <td className="datatable-cell">Three {each}</td>
+      </tr>
+    )
+  )
+}
+
+function httpGetSchema() {
+  // See https://www.npmjs.com/package/web-request
+
+  return WebRequest.get('https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/$metadata');
+}
+
+
+  export default App;
