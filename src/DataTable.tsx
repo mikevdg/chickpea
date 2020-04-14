@@ -6,7 +6,10 @@ import * as WebRequest from 'web-request';
 import './App.css';
 import './DataTable.css';
 
-interface DataTableProps { }
+interface DataTableProps { 
+    url: string;
+    tableName: string;
+}
 
 interface DataTableState {
     table: query.Table;
@@ -18,22 +21,19 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         this.state = { table: OData.emptyTable() };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         // See https://www.npmjs.com/package/web-request
 
-        WebRequest.get('https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/$metadata')
-            .then(
-                (response) => {
-                    console.log("Got data.");
-                    this.setState(
-                        {
-                            table: OData.asTable(response.content, 'People')
-                        })
-                }
-                ,
-                (error) => console.log("Error: " + error));
-    }
+        let metadata = WebRequest.get(OData.metadataURL(this.props.url));
+        let cells = WebRequest.get(OData.tableURL(this.props.url, this.props.tableName));
 
+        let table : query.Table = 
+            OData.asTable((await metadata).content, this.props.tableName)
+        OData.setContents(table, (await cells).content );
+        
+        this.setState( { table: table });
+                
+    }
 
 
     render() {
@@ -53,10 +53,10 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
                         <table className="datatable-table">
                             <thead className="datatable-head">
-                                {this.columns()}
+                                {this.headings()}
                             </thead>
                             <tbody>
-
+                                {this.tableContent()}
                             </tbody>
                         </table>
 
@@ -67,22 +67,35 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         );
     }
 
-    columns() {
+    headings() {
         return (
             <tr>
                 {
                     this.state.table.columns.map(
                         (each) =>
-                            <th>{each.name}</th>
+                            <th className="datatable-head-cell">{each.name}</th>
 
                     )}
             </tr>
         );
     }
 
+    tableContent() {
+        return (
+            this.state.table.contents.map( (eachRow) =>
+                <tr>
+                    {eachRow.cells.map( (eachCell) =>
+                        <td>
+                            { String(eachCell) }
+                        </td>
+                    )}
+                </tr>
+            ));
+    }
+
     /*
     <tr>
-      <th rowSpan={2}>Column A</th>
+      <th rowSpan={2}>Column A</th>.Table, 
       <th colSpan={2}>Column B</th>
     </tr>
     <tr>

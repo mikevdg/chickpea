@@ -38,7 +38,7 @@ export interface ColumnDefinition {
 }
 
 export interface Row {
-    cells: Array<Cell>;
+    cells: Array<string>; // TODO - multiple types.
 }
 
 export interface Table {

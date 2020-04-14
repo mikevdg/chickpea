@@ -1,8 +1,12 @@
 import * as query from '../query'
 
 /** Return the URL where the document metadata can be retrieved. */
-export function metadataURL(baseURL: URL) {
-    return new URL("$metadata", baseURL);
+export function metadataURL(baseURL: string) {
+    return baseURL+"$metadata";
+}
+
+export function tableURL(baseURL: string, tableName: string) {
+    return baseURL+tableName;
 }
 
 export function asTable(metadataXML: string, tableName: string) : query.Table 
@@ -73,8 +77,18 @@ function createTableFrom(entity : Element) : query.Table {
     return result;
 }
 
+/** contents could be JSON or Atom. */
+export function setContents(table : query.Table, contents : string) {
+    let obj = JSON.parse(contents);
+    let result : Array<query.Row> = [];
 
-/*
-function asTable(jsonString : string) : query.Table {
-
-}*/
+    for (let i=0; i<obj.value.length; i++) {
+        let current : Array<string> = []; // TODO: multiple types.
+        let currentRow = obj.value[i];
+        for (let j=0; j<table.columns.length; j++) {
+            current.push(currentRow[table.columns[j].name]);
+        }
+        result.push({cells:current});
+    }
+    table.contents = result;
+}

@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div className="App">
-      <Dt.DataTable>
+      <Dt.DataTable url='https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/' tableName='People'>
 
       </Dt.DataTable>
     </div>
