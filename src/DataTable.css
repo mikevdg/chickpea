@@ -23,8 +23,8 @@
 
 .datatable-scrollwrapperdiv {
     display:grid;
-    height:1200px;
-    width:900px;
+    width:800px;
+    height:600px;
 }
 
 .datatable-scrolldiv {

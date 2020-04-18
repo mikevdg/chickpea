@@ -28,7 +28,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         let cells = WebRequest.get(OData.tableURL(this.props.url, this.props.tableName));
 
         let table : query.Table = 
-            OData.asTable((await metadata).content, this.props.tableName)
+            OData.asTable((await metadata).content, this.props.tableName, [])
         OData.setContents(table, (await cells).content );
         
         this.setState( { table: table });
