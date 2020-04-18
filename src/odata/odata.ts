@@ -59,13 +59,27 @@ export function emptyTable() : query.Table {
 
 function createTableFrom(entity : Element) : query.Table {
     let columns : Array<query.ColumnDefinition> = [];
-    let properties = entity.getElementsByTagName("Property");
+    //let properties = entity.getElementsByTagName("Property");
+    // TODO: <Key> 
     
-    for (let i=0; i<properties.length; i++) {
-        columns.push({
-            name:(properties[i].getAttribute("Name")??"Unnamed Column"),
-            type:query.ColumnType.String
-        });
+    for (let i=0; i<entity.children.length; i++) {
+        let node = entity.children[i];
+        switch (node.nodeName) {
+            case 'Property':
+                columns.push({
+                    name:(node.getAttribute("Name")??"Unnamed Column"),
+                    type:query.ColumnType.String
+                });
+                break;
+            case 'NavigationProperty':
+                console.log('TODO: process navigation properties');
+                break;
+            case 'Key':
+                console.log('TODO: process keys.');
+                break;
+            default:
+                console.log('Unknown node name: '+node.nodeName);
+        }
     }
 
     let result : query.Table = {
