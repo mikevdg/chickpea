@@ -7,8 +7,6 @@ import './DataTable.css';
 
 function App() {
  
- 
-  
 
   return (
     <div className="App">
@@ -17,18 +15,6 @@ function App() {
       </Dt.DataTable>
     </div>
   );
-}
-
-function columns() {
-  return (
-    Array.from(Array(100).keys()).map((each) =>
-      <tr>
-        <td className="datatable-cell">One {each}</td>
-        <td className="datatable-cell">Two {each}</td>
-        <td className="datatable-cell">Three {each}</td>
-      </tr>
-    )
-  )
 }
 
 
