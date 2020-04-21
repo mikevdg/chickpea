@@ -67,15 +67,57 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         );
     }
 
+    depth(pin: query.ColumnDefinition): number {
+        if ('columns' in (pin.type as any)) {
+            return 1+this.maxDepth((pin.type as query.ComplexType).columns);
+        } else {
+            return 0;
+        }
+    }
+
+    maxDepth(pin: Array<query.ColumnDefinition>): number {
+        return Math.max.apply(pin.map(this.depth));
+    }
+
+    columnsToHtml (
+        columns: Array<query.ColumnDefinition>, 
+        depth: number, 
+        maxDepth: number) : JSX.Element {
+
+        return <React.Fragment>
+         {Array.from(Array(maxDepth).keys()).map( depth =>
+            columns.map( 
+                eachColumn => this.columnToHtml(eachColumn, depth, maxDepth))
+         )}
+         </React.Fragment>
+    }
+
+    columnToHtml (
+        column: query.ColumnDefinition, 
+        depth: number, 
+        maxDepth: number) : JSX.Element {
+
+        if (1===depth) {
+            return  (<th 
+                className="datatable-head-cell" 
+                rowSpan={maxDepth-this.depth(column)}>
+                     {column.name}
+            </th>);
+        } else {
+            if ('columns' in (column.type as any)) {
+                return this.columnsToHtml( 
+                    (column.type as query.ComplexType).columns, 
+                    depth-1,
+                    maxDepth)
+            } else return (<p>foo</p>);
+        }
+    }
+
     headings() {
+        let maxDepth: number = this.maxDepth(this.state.table.columns);
         return (
             <tr>
-                {
-                    this.state.table.columns.map(
-                        (each) =>
-                            <th className="datatable-head-cell">{each.name}</th>
-
-                    )}
+                {this.columnsToHtml(this.state.table.columns, 1, maxDepth)}
             </tr>
         );
     }

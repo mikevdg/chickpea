@@ -9,6 +9,13 @@ export function tableURL(baseURL: string, tableName: string) {
     return baseURL + tableName;
 }
 
+
+/* TODO: load the whole schema into its own object. When a column is 
+   expanded, we read from that schema. Bonus: the schema can come
+   from JSON or XML.
+*/
+
+
 export function asTable(
     metadataXML: string, 
     tableName: string, 
@@ -115,76 +122,14 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document, 
 
     let typeOrNull = toPrimitiveType(typeString);
     if (null===typeOrNull) {
-        return createComplexColumnFrom(
-            name, 
-            typeString, 
-            isCollection,
-            namespace, 
-            metadata, 
-            expand);
-    } else {
-        return { name: name, type: typeOrNull, isCollection: isCollection };
-    }
-
-    
-}
-
-function createComplexColumnFrom(
-    name: string,
-    typeString: string,
-    isCollection: boolean,
-    namespace: string,
-    metadata: Document, 
-    expand: Array<string>) 
-    : query.ColumnDefinition
-{
-    if (isExpanded(name, expand)) {
-        let tempTable : query.Table 
-        = findEntity(
-            namespace, 
-            metadata, 
-            typeString, 
-            stripExpand(typeString, expand));
-
-        return {
-            name: name, 
-            type: {isExpanded:true, columns:tempTable.columns}, 
-            isCollection: isCollection
-        };
-    } else {
         return {
             name: name, 
             type: {isExpanded:false, columns:[]}, 
             isCollection: isCollection
         };
+    } else {
+        return { name: name, type: typeOrNull, isCollection: isCollection };
     }
-}
-
-/** Return true if a column is expanded. This happens when $expand=... appears in the URL. */
-function isExpanded(name: string, expand: Array<string>) :boolean {
-    for (let i=0; i<expand.length; i++) {
-        if (expand[i].startsWith(name)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/** Helper for a recursive function above. When traversing down the tree, remove the expands. */
-function stripExpand(name: string, expand: Array<string>) : Array<string> {
-    // TODO: untested.
-    let result :Array<string> = [];
-    for (let i=0; i<expand.length; i++) {
-        if (expand[i].startsWith(name)) {
-            let pushMe = expand[i].substring(name.length+1);
-            if (""!==pushMe) {
-                result.push(pushMe);
-            }
-        } else {
-            result.push(expand[i]);
-        }
-    }
-    return result;
 }
 
 /** contents could be JSON or Atom. */
