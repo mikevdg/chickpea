@@ -6,7 +6,7 @@ import * as WebRequest from 'web-request';
 import './App.css';
 import './DataTable.css';
 
-interface DataTableProps { 
+interface DataTableProps {
     url: string;
     tableName: string;
 }
@@ -27,12 +27,12 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         let metadata = WebRequest.get(OData.metadataURL(this.props.url));
         let cells = WebRequest.get(OData.tableURL(this.props.url, this.props.tableName));
 
-        let table : query.Table = 
+        let table: query.Table =
             OData.asTable((await metadata).content, this.props.tableName, [])
-        OData.setContents(table, (await cells).content );
-        
-        this.setState( { table: table });
-                
+        OData.setContents(table, (await cells).content);
+
+        this.setState({ table: table });
+
     }
 
 
@@ -67,54 +67,45 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         );
     }
 
-    depth(pin: query.ColumnDefinition): number {
-        if ('columns' in (pin.type as any)) {
-            return 1+this.maxDepth((pin.type as query.ComplexType).columns);
-        } else {
-            return 0;
+    columnsToHtml(
+        columns: Array<query.ColumnDefinition>,
+        depth: number,
+        maxDepth: number): JSX.Element {
+
+        if (columns.length===0) {
+            return <React.Fragment/>
         }
-    }
-
-    maxDepth(pin: Array<query.ColumnDefinition>): number {
-        return Math.max.apply(pin.map(this.depth));
-    }
-
-    columnsToHtml (
-        columns: Array<query.ColumnDefinition>, 
-        depth: number, 
-        maxDepth: number) : JSX.Element {
 
         return <React.Fragment>
-         {Array.from(Array(maxDepth).keys()).map( depth =>
-            columns.map( 
-                eachColumn => this.columnToHtml(eachColumn, depth, maxDepth))
-         )}
-         </React.Fragment>
+            {Array.from(Array(maxDepth).keys()).map(depth =>
+                columns.map(
+                    eachColumn => this.columnToHtml(eachColumn, depth, maxDepth))
+            )}
+        </React.Fragment>
     }
 
-    columnToHtml (
-        column: query.ColumnDefinition, 
-        depth: number, 
-        maxDepth: number) : JSX.Element {
-
-        if (1===depth) {
+    columnToHtml(
+        column: query.ColumnDefinition,
+        depth: number,
+        maxDepth: number): JSX.Element {
+        if (1 === depth) {
             return  (<th 
                 className="datatable-head-cell" 
-                rowSpan={maxDepth-this.depth(column)}>
+                rowSpan={maxDepth-depth(column)}>
                      {column.name}
             </th>);
         } else {
             if ('columns' in (column.type as any)) {
-                return this.columnsToHtml( 
-                    (column.type as query.ComplexType).columns, 
-                    depth-1,
+                return this.columnsToHtml(
+                    (column.type as query.ComplexType).columns,
+                    depth - 1,
                     maxDepth)
             } else return (<p>foo</p>);
         }
     }
 
     headings() {
-        let maxDepth: number = this.maxDepth(this.state.table.columns);
+        let maxDepth: number = maxDepth(this.state.table.columns);
         return (
             <tr>
                 {this.columnsToHtml(this.state.table.columns, 1, maxDepth)}
@@ -124,11 +115,11 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
     tableContent() {
         return (
-            this.state.table.contents.map( (eachRow) =>
+            this.state.table.contents.map((eachRow) =>
                 <tr>
-                    {eachRow.cells.map( (eachCell) =>
+                    {eachRow.cells.map((eachCell) =>
                         <td>
-                            { String(eachCell) }
+                            {String(eachCell)}
                         </td>
                     )}
                 </tr>
@@ -146,3 +137,15 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     </tr>*/
 }
 
+function depth(pin: query.ColumnDefinition): number {
+    // Help! How do you differentiate between union types?
+    if (!Number.isInteger(pin.type as any) && 'columns' in (pin.type as any)) {
+        return 1 + maxDepth((pin.type as query.ComplexType).columns);
+    } else {
+        return 0;
+    }
+}
+
+function maxDepth(pin: Array<query.ColumnDefinition>): number {
+    return Math.max(0, Math.max.apply(null, pin.map(depth)));
+}
