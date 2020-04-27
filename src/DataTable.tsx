@@ -86,29 +86,30 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
     columnToHtml(
         column: query.ColumnDefinition,
-        depth: number,
+        ddepth: number,
         maxDepth: number): JSX.Element {
-        if (1 === depth) {
+        if (1 === ddepth) {
             return  (<th 
                 className="datatable-head-cell" 
                 rowSpan={maxDepth-depth(column)}>
                      {column.name}
             </th>);
         } else {
-            if ('columns' in (column.type as any)) {
+            if (!Number.isInteger(column.type as any) 
+                && 'columns' in (column.type as any)) {
                 return this.columnsToHtml(
                     (column.type as query.ComplexType).columns,
-                    depth - 1,
+                    ddepth - 1,
                     maxDepth)
             } else return (<p>foo</p>);
         }
     }
 
     headings() {
-        let maxDepth: number = maxDepth(this.state.table.columns);
+        let mmaxDepth: number = maxDepth(this.state.table.columns);
         return (
             <tr>
-                {this.columnsToHtml(this.state.table.columns, 1, maxDepth)}
+                {this.columnsToHtml(this.state.table.columns, 1, mmaxDepth)}
             </tr>
         );
     }
