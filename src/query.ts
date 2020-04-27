@@ -1,18 +1,35 @@
 
 
 export interface Query {
-    $skip?: number;
-    $top?: number;
-    $filter?: string;
-    $orderby?: string;
-    $expand?: string;
-    $select?: string;  
-    $count?: boolean;
-    $search?: string;
-    $format?: string;
-    $compute?: string;
-    $index?: number;
+    skip?: number;
+    top?: number;
+    orderby?: Array<ColumnDefinition>;
+    expand: Array<ColumnDefinition>;
+    select: Array<ColumnDefinition>;  
+    count: boolean;
+    filter?: any; // TODO - the filter.
+    search?: string;
     [key: string]: any;
+}
+
+export function createQuery() 
+: Query
+{
+    return {
+        expand: [],
+        select: [],
+        count: false
+    };
+}
+
+export function createQueryFrom(
+    name: string,
+    columns: Array<ColumnDefinition>
+) {
+    let result = createQuery();
+    result.select = columns;
+
+    return result;
 }
 
 export enum TypeEnum {
@@ -91,4 +108,15 @@ export interface Table {
     query: Query;
     columns: Array<ColumnDefinition>;
     contents: Array<Row>;
+}
+
+export function createTable(name: string, columns: Array<ColumnDefinition>) 
+: Table 
+{
+    return  {
+        name: name,
+        query: createQueryFrom(name, columns),
+        columns: columns,
+        contents: []
+    };
 }

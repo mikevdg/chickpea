@@ -60,7 +60,7 @@ function findEntity(namespace: string, xml: Document, entityType: string | null,
 export function emptyTable(): query.Table {
     return {
         name: "Error - empty table",
-        query: {},
+        query: (query.createQuery()),
         columns: [],
         contents: []
     };
@@ -92,12 +92,10 @@ function createTableFrom(
         }
     }
 
-    let result: query.Table = {
-        name: (entity.getAttribute("Name") ?? "Error"),
-        query: {},
-        columns: columns,
-        contents: []
-    }
+    let result: query.Table = query.createTable(
+        (entity.getAttribute("Name") ?? "Error"),
+        columns
+    );
     return result;
 }
 

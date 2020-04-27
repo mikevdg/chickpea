@@ -68,8 +68,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     headings() {
-        let mmaxDepth: number = maxDepth(this.state.table.columns);
         let columns: Array<query.ColumnDefinition> = this.state.table.columns;
+        let mmaxDepth: number = maxDepth(columns);
 
         if (columns.length === 0) {
             return <React.Fragment />
