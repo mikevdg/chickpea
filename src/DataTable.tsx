@@ -96,7 +96,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         </React.Fragment>);
     }
 
-
     columnToHtml(
         column: query.ColumnDefinition,
         ddepth: number,
@@ -106,12 +105,36 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         let renderMe: Array<query.ColumnDefinition> =
             columnAtDepth(column, ddepth);
 
+        let collapse : JSX.Element;
+        if (query.isComplex(column)) {
+            if (query.isExpanded(this.state.table.query, column)) {
+                collapse = miniButton("⏷");
+            } else {
+                collapse = miniButton("⏵");
+            }
+        }
+
+        let orderBy : JSX.Element;
+        switch (query.orderedBy(this.state.table.query, column)) {
+            case query.OrderedBy.ASC:
+                orderBy = miniButton("◢");
+                break;
+            case query.OrderedBy.DESC:
+                orderBy = miniButton("◥");
+                break;
+            default:
+                orderBy = miniButton("⊿");
+                break;
+        }
+
         return (<React.Fragment>
             {renderMe.map(each =>
                 <th
                     className="datatable-head-cell"
                     rowSpan={mmaxDepth - depth(column)}>
+                    {collapse}
                     {each.name}
+                    {orderBy}
                 </th>
             )}
         </React.Fragment>);
@@ -181,4 +204,8 @@ function range(to: number) {
 
 function flatten(list: Array<any>) {
     return [].concat.apply([], list);
+}
+
+function miniButton(contents: string) : JSX.Element {
+    return (<button className="datatable-minibutton">{contents}</button>);
 }

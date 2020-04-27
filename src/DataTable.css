@@ -50,3 +50,9 @@
     z-index:1;
     margin-right:12px;
 }
+
+.datatable-minibutton {
+    border: none;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}

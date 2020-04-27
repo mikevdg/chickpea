@@ -49,6 +49,22 @@ export function isComplex(c : ColumnDefinition) : boolean {
     return c.typeEnum === TypeEnum.ComplexType;
 }
 
+export function isExpanded(query :Query, column :ColumnDefinition) : boolean {
+    // TODO: query.expand should be a hierarchy.
+    // return query.expand.some( each => each===column );
+    return true;
+}
+
+export enum OrderedBy {
+    ASC,
+    DESC,
+    NA
+}
+
+export function orderedBy(query :Query, column :ColumnDefinition) : OrderedBy {
+    return OrderedBy.ASC; // TODO
+}
+
 /* This list is from the OData XML or JSON specs:
 https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
 
