@@ -15,13 +15,22 @@ export interface Query {
     [key: string]: any;
 }
 
+export enum TypeEnum {
+    PrimitiveType,
+    ComplexType
+}
+
 /* The column heading, and it's type. */
 export interface ColumnDefinition {
     name: string;
+    typeEnum: TypeEnum;
     type: PrimitiveType | ComplexType ;
     isCollection: boolean;
 }
 
+export function isComplex(c : ColumnDefinition) : boolean {
+    return c.typeEnum === TypeEnum.ComplexType;
+}
 
 /* This list is from the OData XML or JSON specs:
 https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html

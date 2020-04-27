@@ -67,51 +67,54 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         );
     }
 
-    columnsToHtml(
-        columns: Array<query.ColumnDefinition>,
-        depth: number,
-        maxDepth: number): JSX.Element {
+    headings() {
+        let mmaxDepth: number = maxDepth(this.state.table.columns);
+        let columns: Array<query.ColumnDefinition> = this.state.table.columns;
 
-        if (columns.length===0) {
-            return <React.Fragment/>
+        if (columns.length === 0) {
+            return <React.Fragment />
+        } else {
+            return <React.Fragment> {
+
+                range(mmaxDepth).map(ddepth =>
+                    (<tr>
+                        {this.columnsToHtmlAtDepth(columns, ddepth,
+                            mmaxDepth)}
+                    </tr>))
+            } </React.Fragment>
         }
-
-        return <React.Fragment>
-            {Array.from(Array(maxDepth).keys()).map(depth =>
-                columns.map(
-                    eachColumn => this.columnToHtml(eachColumn, depth, maxDepth))
-            )}
-        </React.Fragment>
     }
+
+    columnsToHtmlAtDepth(
+        columns: Array<query.ColumnDefinition>,
+        ddepth: number,
+        mmaxDepth: number)
+        : JSX.Element {
+        return (<React.Fragment>
+            {columns.map(
+                each => this.columnToHtml(each, ddepth, mmaxDepth))}
+        </React.Fragment>);
+    }
+
 
     columnToHtml(
         column: query.ColumnDefinition,
         ddepth: number,
-        maxDepth: number): JSX.Element {
-        if (1 === ddepth) {
-            return  (<th 
-                className="datatable-head-cell" 
-                rowSpan={maxDepth-depth(column)}>
-                     {column.name}
-            </th>);
-        } else {
-            if (!Number.isInteger(column.type as any) 
-                && 'columns' in (column.type as any)) {
-                return this.columnsToHtml(
-                    (column.type as query.ComplexType).columns,
-                    ddepth - 1,
-                    maxDepth)
-            } else return (<p>foo</p>);
-        }
-    }
+        mmaxDepth: number)
+        : JSX.Element {
 
-    headings() {
-        let mmaxDepth: number = maxDepth(this.state.table.columns);
-        return (
-            <tr>
-                {this.columnsToHtml(this.state.table.columns, 1, mmaxDepth)}
-            </tr>
-        );
+        let renderMe: Array<query.ColumnDefinition> =
+            columnAtDepth(column, ddepth);
+
+        return (<React.Fragment>
+            {renderMe.map(each =>
+                <th
+                    className="datatable-head-cell"
+                    rowSpan={mmaxDepth - depth(column)}>
+                    {each.name}
+                </th>
+            )}
+        </React.Fragment>);
     }
 
     tableContent() {
@@ -149,4 +152,33 @@ function depth(pin: query.ColumnDefinition): number {
 
 function maxDepth(pin: Array<query.ColumnDefinition>): number {
     return Math.max(0, Math.max.apply(null, pin.map(depth)));
+}
+
+function columnAtDepth(
+    column: query.ColumnDefinition,
+    ddepth: number)
+    : Array<query.ColumnDefinition> {
+    if (1 === ddepth) {
+        return [column];
+    } else {
+        if (query.isComplex(column)) {
+            let children: Array<query.ColumnDefinition> =
+                ((column.type as query.ComplexType)).columns;
+            return flatten(
+                children.map(columnAtDepth)
+            );
+        } else {
+            return []; // We are below the depth of a primitive column.
+        }
+    }
+}
+
+function range(to: number) {
+    let result = Array.from(Array(to+1).keys());
+    result.shift(); // Remove the zero.
+    return result;
+}
+
+function flatten(list: Array<any>) {
+    return [].concat.apply([], list);
 }

@@ -101,7 +101,7 @@ function createTableFrom(
     return result;
 }
 
-function createColumnFrom(node: Element, namespace: string, metadata: Document, expand: Array<string>) {
+function createColumnFrom(node: Element, namespace: string, metadata: Document, expand: Array<string>) : query.ColumnDefinition {
     let name: string;
     let typeString: string;
     let isCollection: boolean = false;
@@ -124,11 +124,16 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document, 
     if (null===typeOrNull) {
         return {
             name: name, 
-            type: {isExpanded:false, columns:[]}, 
+            typeEnum: query.TypeEnum.ComplexType,
+            type: {isExpanded:false, columns:[]},
             isCollection: isCollection
         };
     } else {
-        return { name: name, type: typeOrNull, isCollection: isCollection };
+        return { 
+            name: name,
+            typeEnum: query.TypeEnum.PrimitiveType,
+            type: typeOrNull, 
+            isCollection: isCollection };
     }
 }
 
