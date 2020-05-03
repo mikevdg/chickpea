@@ -1,5 +1,10 @@
 
 
+
+export interface DataTableState {
+    table: Table;
+}
+
 export interface Query {
     skip?: number;
     top?: number;

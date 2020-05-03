@@ -1,42 +1,22 @@
 import React from 'react';
-import * as OData from './odata/odata';
+
 import * as query from './query';
-import * as WebRequest from 'web-request';
 
 import './App.css';
 import './DataTable.css';
 
-interface DataTableProps {
-    url: string;
-    tableName: string;
-}
-
-interface DataTableState {
+export interface DataTableProps {
     table: query.Table;
 }
 
-export class DataTable extends React.Component<DataTableProps, DataTableState> {
+/** I do not have any state. */
+export class DataTable extends React.Component<DataTableProps> {
     constructor(props: Readonly<any>) {
         super(props);
-        this.state = { table: OData.emptyTable() };
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
         this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
     }
-
-    async componentDidMount() {
-        // See https://www.npmjs.com/package/web-request
-
-        let metadata = WebRequest.get(OData.metadataURL(this.props.url));
-        let cells = WebRequest.get(OData.tableURL(this.props.url, this.props.tableName));
-
-        let table: query.Table =
-            OData.asTable((await metadata).content, this.props.tableName, [])
-        OData.setContents(table, (await cells).content);
-
-        this.setState({ table: table });
-    }
-
 
     render() {
         return (
@@ -70,7 +50,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     renderHeadings(): JSX.Element {
-        let columns: Array<query.ColumnDefinition> = this.state.table.columns;
+        let columns: Array<query.ColumnDefinition> = this.props.table.columns;
         let mmaxDepth: number = maxDepth(columns);
 
         if (columns.length === 0) {
@@ -109,7 +89,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         let collapse: JSX.Element;
         if (query.isComplex(column)) {
-            if (query.isExpanded(this.state.table.query, column)) {
+            if (query.isExpanded(this.props.table.query, column)) {
                 collapse = miniButton("⏷",
                     (e) => this.onExpandComplexColumn(e, q, column));
             } else {
@@ -117,7 +97,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             }
         }
 
-        let q = this.state.table.query;
+        let q = this.props.table.query;
         let orderBy: JSX.Element;
         switch (query.orderedBy(q, column)) {
             case query.OrderedBy.ASC:
@@ -149,7 +129,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
     renderTableContent(): JSX.Element[] {
         return (
-            this.state.table.contents.map((eachRow) =>
+            this.props.table.contents.map((eachRow) =>
                 <tr>
                     {eachRow.cells.map((eachCell) =>
                         <td>
