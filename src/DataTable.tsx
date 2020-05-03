@@ -19,9 +19,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     constructor(props: Readonly<any>) {
         super(props);
         this.state = { table: OData.emptyTable() };
-        this.orderBy = this.orderBy.bind(this);
-        this.expandComplexColumn = this.expandComplexColumn.bind(this);
-        this.unexpandComplexColumn = this.unexpandComplexColumn.bind(this);
+        this.onOrderBy = this.onOrderBy.bind(this);
+        this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
+        this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
     }
 
     async componentDidMount() {
@@ -111,9 +111,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         if (query.isComplex(column)) {
             if (query.isExpanded(this.state.table.query, column)) {
                 collapse = miniButton("⏷",
-                    (e) => this.expandComplexColumn(e, q, column));
+                    (e) => this.onExpandComplexColumn(e, q, column));
             } else {
-                collapse = miniButton("⏵", (e) => this.unexpandComplexColumn(e, q, column));
+                collapse = miniButton("⏵", (e) => this.onUnexpandComplexColumn(e, q, column));
             }
         }
 
@@ -122,15 +122,15 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         switch (query.orderedBy(q, column)) {
             case query.OrderedBy.ASC:
                 orderBy = miniButton("◢", (e) =>
-                    this.orderBy(e, q, column, query.OrderedBy.ASC));
+                    this.onOrderBy(e, q, column, query.OrderedBy.ASC));
                 break;
             case query.OrderedBy.DESC:
                 orderBy = miniButton("◥", (e) =>
-                    this.orderBy(e, q, column, query.OrderedBy.DESC));
+                    this.onOrderBy(e, q, column, query.OrderedBy.DESC));
                 break;
             default:
                 orderBy = miniButton("⊿", (e) =>
-                    this.orderBy(e, q, column, query.OrderedBy.NA));
+                    this.onOrderBy(e, q, column, query.OrderedBy.NA));
                 break;
         }
 
@@ -160,7 +160,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             ));
     }
 
-    orderBy(
+    onOrderBy(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         q: query.Query,
         column: query.ColumnDefinition,
@@ -170,7 +170,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         console.log("Order by " + column.name);
     }
 
-    expandComplexColumn(
+    onExpandComplexColumn(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         q: query.Query,
         column: query.ColumnDefinition
@@ -179,7 +179,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         console.log("Expand " + column.name);
     }
 
-    unexpandComplexColumn(
+    onUnexpandComplexColumn(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         q: query.Query,
         column: query.ColumnDefinition
