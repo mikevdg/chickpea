@@ -19,6 +19,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     constructor(props: Readonly<any>) {
         super(props);
         this.state = { table: OData.emptyTable() };
+        this.orderBy = this.orderBy.bind(this);
+        this.expandComplexColumn = this.expandComplexColumn.bind(this);
+        this.unexpandComplexColumn = this.unexpandComplexColumn.bind(this);
     }
 
     async componentDidMount() {
@@ -32,7 +35,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         OData.setContents(table, (await cells).content);
 
         this.setState({ table: table });
-
     }
 
 
@@ -53,10 +55,10 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
                         <table className="datatable-table">
                             <thead className="datatable-head">
-                                {this.headings()}
+                                {this.renderHeadings()}
                             </thead>
                             <tbody>
-                                {this.tableContent()}
+                                {this.renderTableContent()}
                             </tbody>
                         </table>
 
@@ -67,7 +69,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         );
     }
 
-    headings() {
+    renderHeadings(): JSX.Element {
         let columns: Array<query.ColumnDefinition> = this.state.table.columns;
         let mmaxDepth: number = maxDepth(columns);
 
@@ -78,25 +80,25 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
                 range(mmaxDepth).map(ddepth =>
                     (<tr>
-                        {this.columnsToHtmlAtDepth(columns, ddepth,
+                        {this.renderColumnsToHtmlAtDepth(columns, ddepth,
                             mmaxDepth)}
                     </tr>))
             } </React.Fragment>
         }
     }
 
-    columnsToHtmlAtDepth(
+    renderColumnsToHtmlAtDepth(
         columns: Array<query.ColumnDefinition>,
         ddepth: number,
         mmaxDepth: number)
         : JSX.Element {
         return (<React.Fragment>
             {columns.map(
-                each => this.columnToHtml(each, ddepth, mmaxDepth))}
+                each => this.renderColumnToHtml(each, ddepth, mmaxDepth))}
         </React.Fragment>);
     }
 
-    columnToHtml(
+    renderColumnToHtml(
         column: query.ColumnDefinition,
         ddepth: number,
         mmaxDepth: number)
@@ -105,25 +107,30 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         let renderMe: Array<query.ColumnDefinition> =
             columnAtDepth(column, ddepth);
 
-        let collapse : JSX.Element;
+        let collapse: JSX.Element;
         if (query.isComplex(column)) {
             if (query.isExpanded(this.state.table.query, column)) {
-                collapse = miniButton("⏷");
+                collapse = miniButton("⏷",
+                    (e) => this.expandComplexColumn(e, q, column));
             } else {
-                collapse = miniButton("⏵");
+                collapse = miniButton("⏵", (e) => this.unexpandComplexColumn(e, q, column));
             }
         }
 
-        let orderBy : JSX.Element;
-        switch (query.orderedBy(this.state.table.query, column)) {
+        let q = this.state.table.query;
+        let orderBy: JSX.Element;
+        switch (query.orderedBy(q, column)) {
             case query.OrderedBy.ASC:
-                orderBy = miniButton("◢");
+                orderBy = miniButton("◢", (e) =>
+                    this.orderBy(e, q, column, query.OrderedBy.ASC));
                 break;
             case query.OrderedBy.DESC:
-                orderBy = miniButton("◥");
+                orderBy = miniButton("◥", (e) =>
+                    this.orderBy(e, q, column, query.OrderedBy.DESC));
                 break;
             default:
-                orderBy = miniButton("⊿");
+                orderBy = miniButton("⊿", (e) =>
+                    this.orderBy(e, q, column, query.OrderedBy.NA));
                 break;
         }
 
@@ -140,7 +147,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         </React.Fragment>);
     }
 
-    tableContent() {
+    renderTableContent(): JSX.Element[] {
         return (
             this.state.table.contents.map((eachRow) =>
                 <tr>
@@ -153,6 +160,35 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             ));
     }
 
+    orderBy(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+        q: query.Query,
+        column: query.ColumnDefinition,
+        orderBy: query.OrderedBy
+    )
+        : void {
+        console.log("Order by " + column.name);
+    }
+
+    expandComplexColumn(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+        q: query.Query,
+        column: query.ColumnDefinition
+    )
+        : void {
+        console.log("Expand " + column.name);
+    }
+
+    unexpandComplexColumn(
+        event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+        q: query.Query,
+        column: query.ColumnDefinition
+    )
+        : void {
+        console.log("Unexpand " + column.name);
+    }
+
+
     /*
     <tr>
       <th rowSpan={2}>Column A</th>.Table, 
@@ -163,6 +199,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
       <th>Column B2</th>
     </tr>*/
 }
+
 
 function depth(pin: query.ColumnDefinition): number {
     // Help! How do you differentiate between union types?
@@ -197,7 +234,7 @@ function columnAtDepth(
 }
 
 function range(to: number) {
-    let result = Array.from(Array(to+1).keys());
+    let result = Array.from(Array(to + 1).keys());
     result.shift(); // Remove the zero.
     return result;
 }
@@ -206,6 +243,8 @@ function flatten(list: Array<any>) {
     return [].concat.apply([], list);
 }
 
-function miniButton(contents: string) : JSX.Element {
-    return (<button className="datatable-minibutton">{contents}</button>);
+function miniButton(
+    contents: string,
+    action: ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void)) {
+    return (<button onClick={action} className="datatable-minibutton">{contents}</button>);
 }
