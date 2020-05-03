@@ -7,6 +7,7 @@ import './DataTable.css';
 
 export interface DataTableProps {
     table: query.Table;
+    refetch: any; // function. TODO: what is its type?
 }
 
 /** I do not have any state. */
@@ -148,6 +149,7 @@ export class DataTable extends React.Component<DataTableProps> {
     )
         : void {
         console.log("Order by " + column.name);
+        this.props.refetch();
     }
 
     onExpandComplexColumn(
