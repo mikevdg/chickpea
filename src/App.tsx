@@ -8,17 +8,22 @@ import './App.css';
 import './DataTable.css';
 
 class App extends React.Component<any, query.DataTableState> {
-  readonly url: string = 'https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/';
+  private readonly url: string = 'https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/';
   readonly tableName = 'People';
 
   constructor(props: Readonly<any>) {
     super(props);
-    this.refetch = this.refetch.bind(this);
+    this.onSetQuery = this.onSetQuery.bind(this);
     this.state = { table: OData.emptyTable() };
   }
 
 
   componentDidMount() {
+    this.refetch();
+  }
+
+  onSetQuery(query : query.Query) {
+    console.log("TODO: Setting query.");
     this.refetch();
   }
 

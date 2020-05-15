@@ -8,7 +8,7 @@ export interface DataTableState {
 export interface Query {
     skip?: number;
     top?: number;
-    orderby?: Array<ColumnDefinition>;
+    orderBy: Array<OrderedByEntry>;
     expand: Array<ColumnDefinition>;
     select: Array<ColumnDefinition>;  
     count: boolean;
@@ -17,12 +17,18 @@ export interface Query {
     [key: string]: any;
 }
 
+interface OrderedByEntry {
+    column: ColumnDefinition;
+    orderedBy: OrderedBy;
+}
+
 export function createQuery() 
 : Query
 {
     return {
         expand: [],
         select: [],
+        orderBy: [],
         count: false
     };
 }
@@ -66,8 +72,15 @@ export enum OrderedBy {
     NA
 }
 
-export function orderedBy(query :Query, column :ColumnDefinition) : OrderedBy {
-    return OrderedBy.ASC; // TODO
+/** Return how that column in the query is ordered. */
+export function orderedBy(table :Table, column :ColumnDefinition) : OrderedBy {
+    let query : Query = table.query;
+    let possibleResult = query.orderBy.find(each => each.column === column);
+    if (possibleResult) {
+        return possibleResult.orderedBy;
+    } else {
+        return OrderedBy.NA;
+    }
 }
 
 /* This list is from the OData XML or JSON specs:
@@ -124,20 +137,20 @@ export interface Row {
     cells: Array<any>;
 }
 
-export interface Table {
+export class Table {
     name: string;
     query: Query;
     columns: Array<ColumnDefinition>;
     contents: Array<Row>;
-}
 
-export function createTable(name: string, columns: Array<ColumnDefinition>) 
-: Table 
-{
-    return  {
-        name: name,
-        query: createQueryFrom(name, columns),
-        columns: columns,
-        contents: []
-    };
+    constructor(name: string, columns: Array<ColumnDefinition>) {
+        this.name = name;
+        this.query = createQueryFrom(name, columns);
+        this.columns = columns;
+        this.contents = [];
+    }
+
+    orderBy(column: ColumnDefinition, by: OrderedBy) {
+        this.query.orderBy = [{column: column, orderedBy: by}];
+    }
 }

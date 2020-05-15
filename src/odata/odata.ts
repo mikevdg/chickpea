@@ -58,12 +58,7 @@ function findEntity(namespace: string, xml: Document, entityType: string | null,
 }
 
 export function emptyTable(): query.Table {
-    return {
-        name: "Error - empty table",
-        query: (query.createQuery()),
-        columns: [],
-        contents: []
-    };
+    return new query.Table("Undefined table", []);
 }
 
 function createTableFrom(
@@ -92,7 +87,7 @@ function createTableFrom(
         }
     }
 
-    let result: query.Table = query.createTable(
+    let result: query.Table = new query.Table(
         (entity.getAttribute("Name") ?? "Error"),
         columns
     );
