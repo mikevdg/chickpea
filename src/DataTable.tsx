@@ -8,15 +8,21 @@ import './DataTable.css';
 export interface DataTableProps {
     table: query.Table;
     refetch: any; // function. TODO: what is its type?
+    children: never[];
 }
 
 /** I do not have any state. */
 export class DataTable extends React.Component<DataTableProps> {
-    constructor(props: Readonly<any>) {
+    constructor(props: Readonly<DataTableProps>) {
         super(props);
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
         this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
+    }
+
+    public static defaultProps = {
+        table: (new query.Table("", "")),
+        refetch: (()=>{})
     }
 
     render() {
@@ -148,8 +154,9 @@ export class DataTable extends React.Component<DataTableProps> {
         orderBy: query.OrderedBy
     )
         : void {
-            t.orderBy(column, orderBy);
-            this.props.refetch();
+            let t2 = t.copy();
+            t2.orderBy(column, orderBy);
+            this.props.refetch(t2);
     }
 
     onExpandComplexColumn(

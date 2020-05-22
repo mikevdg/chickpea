@@ -16,10 +16,11 @@ export function tableURL(baseURL: string, tableName: string) {
 */
 
 
-export function asTable(
+export function setTableColumns(
+    table: query.Table,
     metadataXML: string, 
     tableName: string, 
-    expand: Array<string>): query.Table 
+    expand: Array<string>)
 {
     let parser = new DOMParser();
     let xml = parser.parseFromString(metadataXML, "text/xml");
@@ -37,13 +38,14 @@ export function asTable(
 
     for (let i = 0; i < entities.length; i++) {
         if (tableName === entities[i].getAttribute("Name")) {
-            return findEntity(ns ?? "", xml, entities[i].getAttribute("EntityType"), expand);
+            return setTableColumns2(table, ns ?? "", xml, entities[i].getAttribute("EntityType"), expand);
         }
     }
-    return emptyTable();
+
+    console.log("Error: could not set table.");
 }
 
-function findEntity(namespace: string, xml: Document, entityType: string | null, expand: Array<string>): query.Table {
+function setTableColumns2(table: query.Table, namespace: string, xml: Document, entityType: string | null, expand: Array<string>) {
     let entities = xml.getElementsByTagName("edmx:Edmx")[0]
         .getElementsByTagName("edmx:DataServices")[0]
         .getElementsByTagName("Schema")[0]
@@ -51,22 +53,17 @@ function findEntity(namespace: string, xml: Document, entityType: string | null,
 
     for (let i = 0; i < entities.length; i++) {
         if (entityType === namespace + "." + entities[i].getAttribute("Name")) {
-            return createTableFrom(entities[i], namespace, xml, expand);
+            return setTableColumns3(table, entities[i], namespace, xml, expand);
         }
     }
-    return emptyTable();
 }
 
-export function emptyTable(): query.Table {
-    return new query.Table("Undefined table", []);
-}
-
-function createTableFrom(
+function setTableColumns3(
+    table: query.Table,
     entity: Element, 
     namespace: string,
     metadata: Document, 
     expand: Array<string> )
-    : query.Table 
 {
     let columns: Array<query.ColumnDefinition> = [];
     //let properties = entity.getElementsByTagName("Property");
@@ -87,11 +84,7 @@ function createTableFrom(
         }
     }
 
-    let result: query.Table = new query.Table(
-        (entity.getAttribute("Name") ?? "Error"),
-        columns
-    );
-    return result;
+    table.columns = columns;
 }
 
 function createColumnFrom(node: Element, namespace: string, metadata: Document, expand: Array<string>) : query.ColumnDefinition {

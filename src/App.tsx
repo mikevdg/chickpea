@@ -1,8 +1,8 @@
 import React from 'react';
-import * as OData from './odata/odata';
-import * as Dt from './DataTable';
+import { DataTable } from './DataTable';
+import { Room } from './Room';
 import * as query from './query';
-import * as WebRequest from 'web-request';
+
 
 import './App.css';
 import './DataTable.css';
@@ -11,47 +11,16 @@ class App extends React.Component<any, query.DataTableState> {
   private readonly url: string = 'https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/';
   readonly tableName = 'People';
 
-  constructor(props: Readonly<any>) {
-    super(props);
-    this.onSetQuery = this.onSetQuery.bind(this);
-    this.state = { table: OData.emptyTable() };
-  }
-
-
-  componentDidMount() {
-    this.refetch();
-  }
-
-  onSetQuery(query : query.Query) {
-    console.log("TODO: Setting query.");
-    this.refetch();
-  }
-
-  async refetch() {
-    // See https://www.npmjs.com/package/web-request
-
-    console.log("Refetching "+this.url);
-
-    let metadata = WebRequest.get(OData.metadataURL(this.url));
-    let cells = WebRequest.get(OData.tableURL(this.url, this.tableName));
-
-    let table: query.Table =
-      OData.asTable((await metadata).content, this.tableName, [])
-    OData.setContents(table, (await cells).content);
-
-    this.setState({ table: table });
-  }
-
   render() {
     return (
       <div className="App">
-        <Dt.DataTable table={this.state.table} refetch={this.refetch}>
-
-        </Dt.DataTable>
+        <Room url={this.url} tableName={this.tableName}>
+          <DataTable>
+          </DataTable>
+        </Room>
       </div>
     );
   }
 }
-
 
 export default App;
