@@ -167,12 +167,13 @@ export class Table {
 
     async refetch() {
         // See https://www.npmjs.com/package/web-request
-        console.log("Refetching " + this.url());
+        let url = this.url();
+        console.log("Refetching " + url);
 
         let metadata = WebRequest.get(OData.metadataURL(this.baseURL));
         OData.setTableColumns(this, (await metadata).content, this.name, []);
 
-        let cells = WebRequest.get(this.url());
+        let cells = WebRequest.get(url);
         OData.setContents(this, (await cells).content);
     }
 

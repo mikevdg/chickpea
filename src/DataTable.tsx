@@ -22,7 +22,7 @@ export class DataTable extends React.Component<DataTableProps> {
 
     public static defaultProps = {
         table: (new query.Table("", "")),
-        refetch: (()=>{})
+        refetch: (() => { })
     }
 
     render() {
@@ -39,7 +39,6 @@ export class DataTable extends React.Component<DataTableProps> {
                     </div>
 
                     <div className="datatable-contentsdiv">
-
                         <table className="datatable-table">
                             <thead className="datatable-head">
                                 {this.renderHeadings()}
@@ -154,9 +153,9 @@ export class DataTable extends React.Component<DataTableProps> {
         orderBy: query.OrderedBy
     )
         : void {
-            let t2 = t.copy();
-            t2.orderBy(column, orderBy);
-            this.props.refetch(t2);
+        let t2 = t.copy();
+        t2.orderBy(column, orderBy);
+        this.props.refetch(t2);
     }
 
     onExpandComplexColumn(
