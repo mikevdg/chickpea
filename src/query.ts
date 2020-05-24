@@ -14,7 +14,7 @@ export interface Query {
     count: boolean;
     filter?: any; // TODO - the filter.
     search?: string;
-    [key: string]: any;
+    //[key: string]: any;
 }
 
 interface OrderedByEntry {
@@ -74,7 +74,8 @@ export enum OrderedBy {
 /** Return how that column in the query is ordered. */
 export function orderedBy(table: Table, column: ColumnDefinition): OrderedBy {
     let query: Query = table.query;
-    let possibleResult = query.orderBy.find(each => each.column === column);
+    let possibleResult = query.orderBy.find(
+        each => each.column.name === column.name);
     if (possibleResult) {
         return possibleResult.orderedBy;
     } else {
@@ -146,43 +147,54 @@ export class Table {
     constructor(baseURL: string, name: string) {
         this.baseURL = baseURL;
         this.name = name;
-        this.contents = []; 
+        this.contents = [];
         this.query = createQueryFrom(this.name, []);
         this.columns = [];
-        this.refetch = this.refetch.bind(this);
         this.url = this.url.bind(this);
+        this.copy = this.copy.bind(this);
     }
 
     orderBy(column: ColumnDefinition, by: OrderedBy) {
         this.query.orderBy = [{ column: column, orderedBy: by }];
     }
 
-    copy() : Table {
-        let result : Table = new Table(this.baseURL, this.name);
+    copy(): Table {
+        let result: Table = new Table(this.baseURL, this.name);
         result.query = this.query;
         result.columns = this.columns;
         result.contents = this.contents;
         return result;
     }
 
-    async refetch() {
-        // See https://www.npmjs.com/package/web-request
-        let url = this.url();
-        console.log("Refetching " + url);
-
-        let metadata = WebRequest.get(OData.metadataURL(this.baseURL));
-        OData.setTableColumns(this, (await metadata).content, this.name, []);
-
-        let cells = WebRequest.get(url);
-        OData.setContents(this, (await cells).content);
-    }
-
-    url() : string {
+    url(): string {
         let base = this.baseURL + "/" + this.name
         if (this.query.orderBy.length > 0) {
-            return base + "?$orderby="+this.query.orderBy.pop()?.column.name;
+            return base + "?"+this.urlOrderedBy();
         } else {
             return base;
         }
     }
+
+    urlOrderedBy(): string {
+        let result: string = "$orderby="+this.query.orderBy[0].column.name + "%20";
+        switch (this.query.orderBy[0].orderedBy) {
+            case OrderedBy.ASC:
+                return result + "asc";
+            case OrderedBy.DESC:
+                return result + "desc";
+            default:
+                return "";
+        }
+    }
+}
+
+export async function refetch(t: Table) {
+    // See https://www.npmjs.com/package/web-request
+    let url = t.url();
+
+    let metadata = WebRequest.get(OData.metadataURL(t.baseURL));
+    OData.setTableColumns(t, (await metadata).content, t.name, []);
+
+    let cells = WebRequest.get(url);
+    OData.setContents(t, (await cells).content);
 }

@@ -18,6 +18,10 @@ export class DataTable extends React.Component<DataTableProps> {
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
         this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
+        this.renderColumnToHtml = this.renderColumnToHtml.bind(this);
+        this.renderColumnsToHtmlAtDepth = this.renderColumnsToHtmlAtDepth.bind(this);
+        this.renderHeadings = this.renderHeadings.bind(this);
+        this.renderTableContent = this.renderTableContent.bind(this);
     }
 
     public static defaultProps = {
