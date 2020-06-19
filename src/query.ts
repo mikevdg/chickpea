@@ -9,7 +9,7 @@ export interface Query {
     skip?: number;
     top?: number;
     orderBy: Array<OrderedByEntry>;
-    expand: Array<ColumnDefinition>;
+    _expand: ExpandList;
     select: Array<ColumnDefinition>;
     count: boolean;
     filter?: any; // TODO - the filter.
@@ -25,7 +25,7 @@ interface OrderedByEntry {
 export function createQuery()
     : Query {
     return {
-        expand: [],
+        _expand: new ExpandList(),
         select: [],
         orderBy: [],
         count: false
@@ -48,21 +48,39 @@ export enum TypeEnum {
 }
 
 /* The column heading, and it's type. */
-export interface ColumnDefinition {
-    name: string;
-    typeEnum: TypeEnum;
-    type: PrimitiveType | ComplexType;
-    isCollection: boolean;
-}
+export class ColumnDefinition {
+    _name: string;
+    _typeEnum: TypeEnum;
+    _type: PrimitiveType | ComplexType;
+    _parent?: ColumnDefinition;
+    _isCollection: boolean;
 
-export function isComplex(c: ColumnDefinition): boolean {
-    return c.typeEnum === TypeEnum.ComplexType;
-}
+    constructor(name: string, type: PrimitiveType | ComplexType, parent?: ColumnDefinition) {
+        this._name = name;
+        this._typeEnum = TypeEnum.PrimitiveType;
+        this._type = type;
+        this._parent = undefined;
+        this._isCollection = false;
+    }
 
-export function isExpanded(query: Query, column: ColumnDefinition): boolean {
-    // TODO: query.expand should be a hierarchy.
-    // return query.expand.some( each => each===column );
-    return true;
+    isComplex() : boolean {
+        return this._typeEnum === TypeEnum.ComplexType;
+    }
+
+    get name() : string { 
+        return this._name;
+    }
+
+    equals(c : ColumnDefinition) : boolean {
+        return this._name === c._name && this._parent === c._parent;
+    }
+
+    childs() : Array<ColumnDefinition> {
+        if (TypeEnum.ComplexType !== this._typeEnum) {
+            return [];
+        }
+        return (this._type as ComplexType).columns;
+    }
 }
 
 export enum OrderedBy {
@@ -137,38 +155,88 @@ export interface Row {
     cells: Array<any>;
 }
 
+export class ExpandList {
+    _list : Array<ColumnDefinition>;
+
+    constructor() {
+        this._list = [];
+    }
+ 
+    add(column : ColumnDefinition) {
+        if (this._list.some( (each) => each.equals(column))) {
+            return this;
+        } else {
+            this._list.push(column);
+        }
+    }
+
+    isExpanded(column : ColumnDefinition) : boolean {
+        return true;
+    }
+}
+
 export class Table {
-    baseURL: string;
-    name: string;
-    query: Query;
-    columns: Array<ColumnDefinition>;
-    contents: Array<Row>;
+    _baseURL: string;
+    _name: string;
+    _query: Query;
+    _columns: Array<ColumnDefinition>;
+    _contents: Array<Row>;
 
     constructor(baseURL: string, name: string) {
-        this.baseURL = baseURL;
-        this.name = name;
-        this.contents = [];
-        this.query = createQueryFrom(this.name, []);
-        this.columns = [];
+        this._baseURL = baseURL;
+        this._name = name;
+        this._contents = [];
+        this._query = createQueryFrom(this._name, []);
+        this._columns = [];
         this.url = this.url.bind(this);
         this.copy = this.copy.bind(this);
     }
 
+    get columns() : Array<ColumnDefinition> {
+        return this._columns;
+    }
+
+    set columns(c : Array<ColumnDefinition>) {
+        this._columns = c;
+    }
+
+    get query() : Query {
+        return this._query;
+    }
+
+    get contents() : Array<Row> {
+        return this._contents;
+    }
+
+    set contents(c : Array<Row>) {
+        this._contents = c;
+    }
+
+    expand(column: ColumnDefinition) {
+        this._query._expand.add(column);
+        return this;
+    }
+
+    isExpanded(column: ColumnDefinition) : boolean {
+        return this._query._expand.isExpanded(column);
+    }
+
     orderBy(column: ColumnDefinition, by: OrderedBy) {
-        this.query.orderBy = [{ column: column, orderedBy: by }];
+        this._query.orderBy = [{ column: column, orderedBy: by }];
+        return this;
     }
 
     copy(): Table {
-        let result: Table = new Table(this.baseURL, this.name);
-        result.query = this.query;
-        result.columns = this.columns;
-        result.contents = this.contents;
+        let result: Table = new Table(this._baseURL, this._name);
+        result._query = this._query;
+        result._columns = this._columns;
+        result._contents = this._contents;
         return result;
     }
 
     url(): string {
-        let base = this.baseURL + "/" + this.name
-        if (this.query.orderBy.length > 0) {
+        let base = this._baseURL + "/" + this._name
+        if (this._query.orderBy.length > 0) {
             return base + "?"+this.urlOrderedBy();
         } else {
             return base;
@@ -176,8 +244,8 @@ export class Table {
     }
 
     urlOrderedBy(): string {
-        let result: string = "$orderby="+this.query.orderBy[0].column.name + "%20";
-        switch (this.query.orderBy[0].orderedBy) {
+        let result: string = "$orderby="+this._query.orderBy[0].column.name + "%20";
+        switch (this._query.orderBy[0].orderedBy) {
             case OrderedBy.ASC:
                 return result + "asc";
             case OrderedBy.DESC:
@@ -192,8 +260,8 @@ export async function refetch(t: Table) {
     // See https://www.npmjs.com/package/web-request
     let url = t.url();
 
-    let metadata = WebRequest.get(OData.metadataURL(t.baseURL));
-    OData.setTableColumns(t, (await metadata).content, t.name, []);
+    let metadata = WebRequest.get(OData.metadataURL(t._baseURL));
+    OData.setTableColumns(t, (await metadata).content, t._name);
 
     let cells = WebRequest.get(url);
     OData.setContents(t, (await cells).content);

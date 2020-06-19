@@ -99,8 +99,8 @@ export class DataTable extends React.Component<DataTableProps> {
             columnAtDepth(column, ddepth);
 
         let collapse: JSX.Element;
-        if (query.isComplex(column)) {
-            if (query.isExpanded(this.props.table.query, column)) {
+        if (column.isComplex()) {
+            if (this.props.table.isExpanded(column)) {
                 collapse = miniButton("⏷",
                     (e) => this.onExpandComplexColumn(e, t, column));
             } else {
@@ -168,7 +168,7 @@ export class DataTable extends React.Component<DataTableProps> {
         column: query.ColumnDefinition
     )
         : void {
-        console.log("Expand " + column.name);
+        this.props.refetch(t.copy().expand(column));
     }
 
     onUnexpandComplexColumn(
@@ -195,8 +195,8 @@ export class DataTable extends React.Component<DataTableProps> {
 
 function depth(pin: query.ColumnDefinition): number {
     // Help! How do you differentiate between union types?
-    if (!Number.isInteger(pin.type as any) && 'columns' in (pin.type as any)) {
-        return 1 + maxDepth((pin.type as query.ComplexType).columns);
+    if (!Number.isInteger(pin._type as any) && 'columns' in (pin._type as any)) {
+        return 1 + maxDepth((pin._type as query.ComplexType).columns);
     } else {
         return 0;
     }
@@ -213,9 +213,9 @@ function columnAtDepth(
     if (1 === ddepth) {
         return [column];
     } else {
-        if (query.isComplex(column)) {
+        if (column.isComplex()) {
             let children: Array<query.ColumnDefinition> =
-                ((column.type as query.ComplexType)).columns;
+                column.childs();
             return flatten(
                 children.map(columnAtDepth)
             );

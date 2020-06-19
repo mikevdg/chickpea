@@ -19,8 +19,7 @@ export function tableURL(baseURL: string, tableName: string) {
 export function setTableColumns(
     table: query.Table,
     metadataXML: string, 
-    tableName: string, 
-    expand: Array<string>)
+    tableName: string)
 {
     let parser = new DOMParser();
     let xml = parser.parseFromString(metadataXML, "text/xml");
@@ -38,14 +37,14 @@ export function setTableColumns(
 
     for (let i = 0; i < entities.length; i++) {
         if (tableName === entities[i].getAttribute("Name")) {
-            return setTableColumns2(table, ns ?? "", xml, entities[i].getAttribute("EntityType"), expand);
+            return setTableColumns2(table, ns ?? "", xml, entities[i].getAttribute("EntityType"));
         }
     }
 
     console.log("Error: could not set table.");
 }
 
-function setTableColumns2(table: query.Table, namespace: string, xml: Document, entityType: string | null, expand: Array<string>) {
+function setTableColumns2(table: query.Table, namespace: string, xml: Document, entityType: string | null) {
     let entities = xml.getElementsByTagName("edmx:Edmx")[0]
         .getElementsByTagName("edmx:DataServices")[0]
         .getElementsByTagName("Schema")[0]
@@ -53,7 +52,7 @@ function setTableColumns2(table: query.Table, namespace: string, xml: Document, 
 
     for (let i = 0; i < entities.length; i++) {
         if (entityType === namespace + "." + entities[i].getAttribute("Name")) {
-            return setTableColumns3(table, entities[i], namespace, xml, expand);
+            return setTableColumns3(table, entities[i], namespace, xml);
         }
     }
 }
@@ -62,8 +61,7 @@ function setTableColumns3(
     table: query.Table,
     entity: Element, 
     namespace: string,
-    metadata: Document, 
-    expand: Array<string> )
+    metadata: Document)
 {
     let columns: Array<query.ColumnDefinition> = [];
     //let properties = entity.getElementsByTagName("Property");
@@ -74,7 +72,7 @@ function setTableColumns3(
         switch (node.nodeName) {
             case 'Property':
             case 'NavigationProperty':
-                columns.push(createColumnFrom(node, namespace, metadata, expand));
+                columns.push(createColumnFrom(node, namespace, metadata));
                 break;
             case 'Key':
                 console.log('TODO: process keys.');
@@ -87,7 +85,8 @@ function setTableColumns3(
     table.columns = columns;
 }
 
-function createColumnFrom(node: Element, namespace: string, metadata: Document, expand: Array<string>) : query.ColumnDefinition {
+function createColumnFrom(node: Element, namespace: string, metadata: Document) : query.ColumnDefinition 
+{
     let name: string;
     let typeString: string;
     let isCollection: boolean = false;
@@ -108,18 +107,9 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document, 
 
     let typeOrNull = toPrimitiveType(typeString);
     if (null===typeOrNull) {
-        return {
-            name: name, 
-            typeEnum: query.TypeEnum.ComplexType,
-            type: {isExpanded:false, columns:[]},
-            isCollection: isCollection
-        };
+        return new query.ColumnDefinition(name, {isExpanded:false, columns:[]}, undefined);        
     } else {
-        return { 
-            name: name,
-            typeEnum: query.TypeEnum.PrimitiveType,
-            type: typeOrNull, 
-            isCollection: isCollection };
+        return new query.ColumnDefinition(name, typeOrNull, undefined);
     }
 }
 
