@@ -7,14 +7,17 @@ import * as query from './query';
 import './App.css';
 import './DataTable.css';
 
-class App extends React.Component<any, query.DataTableState> {
+class App extends React.Component {
   private readonly url: string = 'https://services.odata.org/TripPinRESTierService/(S(mly0lemodbb4rmdukjup4lcm))/';
   readonly tableName = 'People';
 
   render() {
+    let q : query.Query = query.Query.create(this.url, this.tableName);
+
     return (
       <div className="App">
-        <Room url={this.url} tableName={this.tableName}>
+        // TODO: The room needs a whole query as input somehow: 
+        <Room query={q}>
           <DataTable>
           </DataTable>
         </Room>

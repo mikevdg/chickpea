@@ -2,11 +2,12 @@ import React from 'react';
 
 import * as query from './query';
 
+
 import './App.css';
 import './DataTable.css';
 
 export interface DataTableProps {
-    table: query.Table;
+    table: query.Query;
     refetch: any; // function. TODO: what is its type?
     children: never[];
 }
@@ -25,7 +26,7 @@ export class DataTable extends React.Component<DataTableProps> {
     }
 
     public static defaultProps = {
-        table: (new query.Table("", "")),
+        table: (query.Query.create("", "")), // TODO: "Loading..."
         refetch: (() => { })
     }
 
@@ -60,7 +61,7 @@ export class DataTable extends React.Component<DataTableProps> {
     }
 
     renderHeadings(): JSX.Element {
-        let columns: Array<query.ColumnDefinition> = this.props.table.columns;
+        let columns: Array<query.ColumnDefinition> = this.props.table._select;
         let mmaxDepth: number = maxDepth(columns);
 
         if (columns.length === 0) {
@@ -152,7 +153,7 @@ export class DataTable extends React.Component<DataTableProps> {
 
     onOrderBy(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        t: query.Table,
+        t: query.Query,
         column: query.ColumnDefinition,
         orderBy: query.OrderedBy
     )
@@ -164,7 +165,7 @@ export class DataTable extends React.Component<DataTableProps> {
 
     onExpandComplexColumn(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        t: query.Table,
+        t: query.Query,
         column: query.ColumnDefinition
     )
         : void {
@@ -173,7 +174,7 @@ export class DataTable extends React.Component<DataTableProps> {
 
     onUnexpandComplexColumn(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-        t: query.Table,
+        t: query.Query,
         column: query.ColumnDefinition
     )
         : void {
@@ -240,3 +241,4 @@ function miniButton(
     action: ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void)) {
     return (<button onClick={action} className="datatable-minibutton">{contents}</button>);
 }
+

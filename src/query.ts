@@ -1,45 +1,109 @@
-import * as WebRequest from 'web-request';
-import * as OData from './odata/odata';
+/* A "Query" is the model for a data table on the screen. It contains all the state of a query, plus the contents of the current screen-full of data. 
+*/
 
-export interface DataTableState {
-    table: Table;
-}
+export class Query {
+    _baseURL: string;
+    _tableName: string;
 
-export interface Query {
-    skip?: number;
-    top?: number;
-    orderBy: Array<OrderedByEntry>;
-    _expand: ExpandList;
-    select: Array<ColumnDefinition>;
-    count: boolean;
-    filter?: any; // TODO - the filter.
-    search?: string;
+    _skip?: number;
+    _top?: number;
+    _orderBy: Array<OrderedByEntry>; // Which columns to sort by.
+    _select: SelectColumns; // The visible columns, and whether they're expanded.
+    _count: boolean; // TODO whether I'm a 'select count(*)'
+    _filter?: any; // TODO
+    _search?: string; // TODO - generic string search
     //[key: string]: any;
+
+    _contents: Array<Row>;
+
+    static create(baseURL: string, name: string): Query {
+        return new this().baseURL(baseURL).name(name);
+    }
+
+    constructor() {
+        this._baseURL = "";
+        this._tableName = "";
+        this._contents = [];
+        this._orderBy = [];
+        this._count = false;
+        this._select = new SelectColumns();
+        this.url = this.url.bind(this);
+        this.copy = this.copy.bind(this);
+    }
+
+    copy(): Query {
+        return new Query().copyFrom(this);
+    }
+
+    copyFrom(other: Query): Query {
+        this._baseURL = other._baseURL;
+        this._tableName = other._tableName;
+        this._contents = other._contents;
+        this._orderBy = other._orderBy;
+        this._count = other._count;
+        this._select = other._select;
+        return this;
+    }
+
+    baseURL(url: string): Query {
+        this._baseURL = url;
+        return this;
+    }
+
+    name(tableName: string): Query {
+        this._tableName = tableName;
+        return this;
+    }
+
+    get contents(): Array<Row> {
+        return this._contents;
+    }
+
+    set contents(c: Array<Row>) {
+        this._contents = c;
+    }
+
+    expand(column: ColumnDefinition) {
+        //this._query._expand.add(column);
+        return this;
+    }
+
+    isExpanded(column: ColumnDefinition): boolean {
+        //return this._query._expand.isExpanded(column);
+        return false;
+    }
+
+    orderBy(column: ColumnDefinition, by: OrderedBy) {
+        this._orderBy = [{ column: column, orderedBy: by }];
+        return this;
+    }
+
+
+    url(): string {
+        let base = this._baseURL + "/" + this._tableName;
+        if (this._orderBy.length > 0) {
+            return base + "?" + this.urlOrderedBy();
+        } else {
+            return base;
+        }
+    }
+
+    urlOrderedBy(): string {
+        let result: string = "$orderby=" + this._orderBy[0].column.name + "%20";
+        switch (this._orderBy[0].orderedBy) {
+            case OrderedBy.ASC:
+                return result + "asc";
+            case OrderedBy.DESC:
+                return result + "desc";
+            default:
+                return "";
+        }
+    }
 }
 
 interface OrderedByEntry {
     column: ColumnDefinition;
     orderedBy: OrderedBy;
-}
-
-export function createQuery()
-    : Query {
-    return {
-        _expand: new ExpandList(),
-        select: [],
-        orderBy: [],
-        count: false
-    };
-}
-
-export function createQueryFrom(
-    name: string,
-    columns: Array<ColumnDefinition>
-) {
-    let result = createQuery();
-    result.select = columns;
-
-    return result;
 }
 
 export enum TypeEnum {
@@ -63,19 +127,19 @@ export class ColumnDefinition {
         this._isCollection = false;
     }
 
-    isComplex() : boolean {
+    isComplex(): boolean {
         return this._typeEnum === TypeEnum.ComplexType;
     }
 
-    get name() : string { 
+    get name(): string {
         return this._name;
     }
 
-    equals(c : ColumnDefinition) : boolean {
+    equals(c: ColumnDefinition): boolean {
         return this._name === c._name && this._parent === c._parent;
     }
 
-    childs() : Array<ColumnDefinition> {
+    childs(): Array<ColumnDefinition> {
         if (TypeEnum.ComplexType !== this._typeEnum) {
             return [];
         }
@@ -87,18 +151,6 @@ export enum OrderedBy {
     ASC,
     DESC,
     NA
-}
-
-/** Return how that column in the query is ordered. */
-export function orderedBy(table: Table, column: ColumnDefinition): OrderedBy {
-    let query: Query = table.query;
-    let possibleResult = query.orderBy.find(
-        each => each.column.name === column.name);
-    if (possibleResult) {
-        return possibleResult.orderedBy;
-    } else {
-        return OrderedBy.NA;
-    }
 }
 
 /* This list is from the OData XML or JSON specs:
@@ -155,114 +207,33 @@ export interface Row {
     cells: Array<any>;
 }
 
-export class ExpandList {
-    _list : Array<ColumnDefinition>;
+class SelectColumns {
+    _list: Array<ColumnDefinition>;
 
     constructor() {
         this._list = [];
     }
- 
-    add(column : ColumnDefinition) {
-        if (this._list.some( (each) => each.equals(column))) {
+
+    add(column: ColumnDefinition) {
+        if (this._list.some((each) => each.equals(column))) {
             return this;
         } else {
             this._list.push(column);
         }
     }
 
-    isExpanded(column : ColumnDefinition) : boolean {
+    isExpanded(column: ColumnDefinition): boolean {
         return true;
     }
 }
 
-export class Table {
-    _baseURL: string;
-    _name: string;
-    _query: Query;
-    _columns: Array<ColumnDefinition>;
-    _contents: Array<Row>;
-
-    constructor(baseURL: string, name: string) {
-        this._baseURL = baseURL;
-        this._name = name;
-        this._contents = [];
-        this._query = createQueryFrom(this._name, []);
-        this._columns = [];
-        this.url = this.url.bind(this);
-        this.copy = this.copy.bind(this);
+/** Return how that column in the query is ordered. */
+export function orderedBy(table: Query, column: ColumnDefinition): OrderedBy {
+    let possibleResult = table._orderBy.find(
+        each => each.column.name === column.name);
+    if (possibleResult) {
+        return possibleResult.orderedBy;
+    } else {
+        return OrderedBy.NA;
     }
-
-    get columns() : Array<ColumnDefinition> {
-        return this._columns;
-    }
-
-    set columns(c : Array<ColumnDefinition>) {
-        this._columns = c;
-    }
-
-    get query() : Query {
-        return this._query;
-    }
-
-    get contents() : Array<Row> {
-        return this._contents;
-    }
-
-    set contents(c : Array<Row>) {
-        this._contents = c;
-    }
-
-    expand(column: ColumnDefinition) {
-        this._query._expand.add(column);
-        return this;
-    }
-
-    isExpanded(column: ColumnDefinition) : boolean {
-        return this._query._expand.isExpanded(column);
-    }
-
-    orderBy(column: ColumnDefinition, by: OrderedBy) {
-        this._query.orderBy = [{ column: column, orderedBy: by }];
-        return this;
-    }
-
-    copy(): Table {
-        let result: Table = new Table(this._baseURL, this._name);
-        result._query = this._query;
-        result._columns = this._columns;
-        result._contents = this._contents;
-        return result;
-    }
-
-    url(): string {
-        let base = this._baseURL + "/" + this._name
-        if (this._query.orderBy.length > 0) {
-            return base + "?"+this.urlOrderedBy();
-        } else {
-            return base;
-        }
-    }
-
-    urlOrderedBy(): string {
-        let result: string = "$orderby="+this._query.orderBy[0].column.name + "%20";
-        switch (this._query.orderBy[0].orderedBy) {
-            case OrderedBy.ASC:
-                return result + "asc";
-            case OrderedBy.DESC:
-                return result + "desc";
-            default:
-                return "";
-        }
-    }
-}
-
-export async function refetch(t: Table) {
-    // See https://www.npmjs.com/package/web-request
-    let url = t.url();
-
-    let metadata = WebRequest.get(OData.metadataURL(t._baseURL));
-    OData.setTableColumns(t, (await metadata).content, t._name);
-
-    let cells = WebRequest.get(url);
-    OData.setContents(t, (await cells).content);
 }
