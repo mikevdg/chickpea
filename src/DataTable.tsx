@@ -61,10 +61,10 @@ export class DataTable extends React.Component<DataTableProps> {
     }
 
     renderHeadings(): JSX.Element {
-        let columns: Array<query.ColumnDefinition> = this.props.table._select;
-        let mmaxDepth: number = maxDepth(columns);
+        let columns: query.ComplexColumnDefinition = this.props.table._select;
+        let mmaxDepth: number = columns.depth();
 
-        if (columns.length === 0) {
+        if (columns.isEmpty()) {
             return <React.Fragment />
         } else {
             return <React.Fragment> {
@@ -79,7 +79,7 @@ export class DataTable extends React.Component<DataTableProps> {
     }
 
     renderColumnsToHtmlAtDepth(
-        columns: Array<query.ColumnDefinition>,
+        columns: query.ComplexColumnDefinition,
         ddepth: number,
         mmaxDepth: number)
         : JSX.Element {
@@ -129,7 +129,7 @@ export class DataTable extends React.Component<DataTableProps> {
             {renderMe.map(each =>
                 <th
                     className="datatable-head-cell"
-                    rowSpan={mmaxDepth - depth(column)}>
+                    rowSpan={mmaxDepth - column.depth()}>
                     {collapse}
                     {each.name}
                     {orderBy}
@@ -191,20 +191,6 @@ export class DataTable extends React.Component<DataTableProps> {
       <th>Column B1</th>
       <th>Column B2</th>
     </tr>*/
-}
-
-
-function depth(pin: query.ColumnDefinition): number {
-    // Help! How do you differentiate between union types?
-    if (!Number.isInteger(pin._type as any) && 'columns' in (pin._type as any)) {
-        return 1 + maxDepth((pin._type as query.ComplexType).columns);
-    } else {
-        return 0;
-    }
-}
-
-function maxDepth(pin: Array<query.ColumnDefinition>): number {
-    return Math.max(0, Math.max.apply(null, pin.map(depth)));
 }
 
 function columnAtDepth(

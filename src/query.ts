@@ -8,7 +8,7 @@ export class Query {
     _skip?: number;
     _top?: number;
     _orderBy: Array<OrderedByEntry>; // Which columns to sort by.
-    _select: SelectColumns; // The visible columns, and whether they're expanded.
+    _select: ComplexColumnDefinition; // The visible columns, and whether they're expanded.
     _count: boolean; // TODO whether I'm a 'select count(*)'
     _filter?: any; // TODO
     _search?: string; // TODO - generic string search
@@ -26,7 +26,9 @@ export class Query {
         this._contents = [];
         this._orderBy = [];
         this._count = false;
-        this._select = new SelectColumns();
+
+        // We use this super-column to contain a list of my actual visible columns.
+        this._select = new ComplexColumnDefinition("Supercolumn", undefined);
         this.url = this.url.bind(this);
         this.copy = this.copy.bind(this);
     }
@@ -99,6 +101,14 @@ export class Query {
                 return "";
         }
     }
+
+    set columns(columns : Array<ColumnDefinition>) {
+        this._select.columns = columns;
+    }
+
+    numColumns() : number {
+        return this._select.numColumns();
+    }
 }
 
 interface OrderedByEntry {
@@ -106,30 +116,21 @@ interface OrderedByEntry {
     orderedBy: OrderedBy;
 }
 
-export enum TypeEnum {
-    PrimitiveType,
-    ComplexType
-}
-
 /* The column heading, and it's type. */
-export class ColumnDefinition {
+export abstract class ColumnDefinition {
     _name: string;
-    _typeEnum: TypeEnum;
-    _type: PrimitiveType | ComplexType;
+
+    // _type and childColumns are mutually exclusive.
     _parent?: ColumnDefinition;
-    _isCollection: boolean;
+    // TODO _isCollection: boolean;
 
-    constructor(name: string, type: PrimitiveType | ComplexType, parent?: ColumnDefinition) {
+    constructor(name: string, parent?: ColumnDefinition) {
         this._name = name;
-        this._typeEnum = TypeEnum.PrimitiveType;
-        this._type = type;
         this._parent = undefined;
-        this._isCollection = false;
+        //this._isCollection = false;
     }
 
-    isComplex(): boolean {
-        return this._typeEnum === TypeEnum.ComplexType;
-    }
+    abstract isComplex(): boolean;
 
     get name(): string {
         return this._name;
@@ -140,10 +141,78 @@ export class ColumnDefinition {
     }
 
     childs(): Array<ColumnDefinition> {
-        if (TypeEnum.ComplexType !== this._typeEnum) {
-            return [];
+        return [];
+    }
+
+    depth(): number {
+        return 1;
+    }
+
+    numColumns() : number { 
+        return 1;
+    }
+}
+
+export class PrimitiveColumnDefinition extends ColumnDefinition {
+    _type: PrimitiveType;
+
+    constructor(name: string, type: PrimitiveType, parent?: ColumnDefinition) {
+        super(name, parent);
+        this._type = type;
+    }
+
+    isComplex() : boolean {
+        return false;
+    }
+}
+
+export class ComplexColumnDefinition extends ColumnDefinition {
+    isExpanded: boolean; 
+    childColumns: Array<ColumnDefinition>;
+
+    constructor(name: string, parent?: ColumnDefinition) {
+        super(name, parent);
+        this.isExpanded = false;
+        this.childColumns = [];
+    }
+
+    isComplex() : boolean {
+        return true;
+    }
+
+    childs(): Array<ColumnDefinition> {
+        return this.childColumns;
+    }
+
+    depth() : number {
+        let maxDepth = 0;
+        for (let i=0; i<this.childColumns.length; i++) {
+            let current = this.childColumns[i].depth();
+            if (current > maxDepth) {
+                maxDepth = current;
+            }
         }
-        return (this._type as ComplexType).columns;
+        return maxDepth + 1;
+    }
+
+    map<U>(callbackfn: (value: ColumnDefinition, index: number, array: ColumnDefinition[]) => U, thisArg?: any): U[] {
+        return this.childColumns.map(callbackfn);
+    }
+
+    isEmpty() : boolean {
+        return this.childColumns.length === 0;
+    }
+
+    set columns(c : Array<ColumnDefinition>) {
+        this.childColumns = c;
+    }
+
+    numColumns() : number {
+        let sum=0;
+        for (let i=0; i<this.childColumns.length; i++) {
+            sum = sum + this.childColumns[i].numColumns();
+        }
+        return sum;
     }
 }
 
@@ -162,6 +231,7 @@ Note that very few of these are implemented yet.
 
 */
 export enum PrimitiveType {
+
     Binary, //	Binary data
     Boolean, //	Binary-valued logic
     Byte, //	Unsigned 8-bit integer
@@ -197,34 +267,8 @@ export enum PrimitiveType {
     GeometryCollection, //	Collection of arbitrary Geometry values
 }
 
-/* A column can have multiple sub-columns from a 1..1 join to another table. This is one of those. */
-export interface ComplexType {
-    isExpanded: boolean; // If false, don't look at columns.
-    columns: Array<ColumnDefinition>;
-}
-
 export interface Row {
     cells: Array<any>;
-}
-
-class SelectColumns {
-    _list: Array<ColumnDefinition>;
-
-    constructor() {
-        this._list = [];
-    }
-
-    add(column: ColumnDefinition) {
-        if (this._list.some((each) => each.equals(column))) {
-            return this;
-        } else {
-            this._list.push(column);
-        }
-    }
-
-    isExpanded(column: ColumnDefinition): boolean {
-        return true;
-    }
 }
 
 /** Return how that column in the query is ordered. */

@@ -17,7 +17,7 @@ export function tableURL(baseURL: string, tableName: string) {
 
 
 export function setTableColumns(
-    table: query.Table,
+    table: query.Query,
     metadataXML: string, 
     tableName: string)
 {
@@ -44,7 +44,7 @@ export function setTableColumns(
     console.log("Error: could not set table.");
 }
 
-function setTableColumns2(table: query.Table, namespace: string, xml: Document, entityType: string | null) {
+function setTableColumns2(table: query.Query, namespace: string, xml: Document, entityType: string | null) {
     let entities = xml.getElementsByTagName("edmx:Edmx")[0]
         .getElementsByTagName("edmx:DataServices")[0]
         .getElementsByTagName("Schema")[0]
@@ -58,7 +58,7 @@ function setTableColumns2(table: query.Table, namespace: string, xml: Document, 
 }
 
 function setTableColumns3(
-    table: query.Table,
+    table: query.Query,
     entity: Element, 
     namespace: string,
     metadata: Document)
@@ -107,21 +107,22 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
 
     let typeOrNull = toPrimitiveType(typeString);
     if (null===typeOrNull) {
-        return new query.ColumnDefinition(name, {isExpanded:false, columns:[]}, undefined);        
+        return new query.ComplexColumnDefinition(name, undefined);        
     } else {
-        return new query.ColumnDefinition(name, typeOrNull, undefined);
+        return new query.PrimitiveColumnDefinition(name, typeOrNull, undefined);
     }
 }
 
 /** contents could be JSON or Atom. */
-export function setContents(table: query.Table, contents: string) {
+export function setContents(table: query.Query, contents: string) {
     let obj = JSON.parse(contents);
     let result: Array<query.Row> = [];
 
     for (let i = 0; i < obj.value.length; i++) {
         let current: Array<string> = []; // TODO: multiple types.
         let currentRow = obj.value[i];
-        for (let j = 0; j < table.columns.length; j++) {
+        let totalColumns = table.numColumns();
+        for (let j = 0; j < totalColumns; j++) {
             current.push(currentRow[table.columns[j].name]);
         }
         result.push({ cells: current });
