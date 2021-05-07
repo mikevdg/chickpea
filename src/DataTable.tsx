@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { RefObject } from 'react';
 
 import * as query from './query';
 
@@ -9,13 +9,25 @@ import './DataTable.css';
 export interface DataTableProps {
     table: query.Query;
     refetch: any; // function. TODO: what is its type?
-    children: never[];
+    children: never[];    
+}
+
+export interface DataTableState {
+    scrollIndex : number;
 }
 
 /** I do not have any state. */
-export class DataTable extends React.Component<DataTableProps> {
+export class DataTable extends React.Component<DataTableProps, DataTableState> {
+    private scrollBar : RefObject<any>;
+
     constructor(props: Readonly<DataTableProps>) {
         super(props);
+        this.state = {
+            scrollIndex: 0
+        }
+
+        this.scrollBar = React.createRef();
+
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
         this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
@@ -36,10 +48,13 @@ export class DataTable extends React.Component<DataTableProps> {
 
                 <div className="datatable-filterdiv">
                     Filter
-            </div>
+                </div>
 
                 <div className="datatable-scrollwrapperdiv">
-                    <div className="datatable-scrolldiv">
+                    <div 
+                        className="datatable-scrolldiv" 
+                        onScroll={(event) => this.handleScroll(event)}
+                        ref ={this.scrollBar}>
                         <div className="datatable-scroll-fakecontents"></div>
                     </div>
 
@@ -52,7 +67,7 @@ export class DataTable extends React.Component<DataTableProps> {
                                 {this.renderTableContent()}
                             </tbody>
                         </table>
-
+                        <input value={this.state.scrollIndex}/>
                     </div>
 
                 </div>
@@ -181,16 +196,9 @@ export class DataTable extends React.Component<DataTableProps> {
         console.log("Unexpand " + column.name);
     }
 
-
-    /*
-    <tr>
-      <th rowSpan={2}>Column A</th>.Table, 
-      <th colSpan={2}>Column B</th>
-    </tr>
-    <tr>
-      <th>Column B1</th>
-      <th>Column B2</th>
-    </tr>*/
+    handleScroll = (event : React.UIEvent<HTMLDivElement, UIEvent>) => {
+        this.setState({scrollIndex: (event.target as any).scrollTop});
+    }
 }
 
 function columnAtDepth(
