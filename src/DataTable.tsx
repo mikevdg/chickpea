@@ -197,6 +197,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     handleScroll = (event : React.UIEvent<HTMLDivElement, UIEvent>) => {
+        // TODO: A much better way of doing this is to have hidden divs above
+        // and below the content, and resize them.
+        // https://codesandbox.io/s/react-virtual-scrolling-basics-u1svg
         this.setState({scrollIndex: (event.target as any).scrollTop});
     }
 }
