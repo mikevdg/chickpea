@@ -1,7 +1,6 @@
 import React from 'react';
 import * as query from './query';
 
-import * as WebRequest from 'web-request';
 import * as OData from './odata/odata';
 
 /* A room contains the state of a table - the data, a list of edits, the selected row, the selected column, etc.
@@ -34,8 +33,10 @@ export class Room extends React.Component<RoomProps, RoomState> {
     }
 
     async refetch(table: query.Query) {
-        await refetch(table);
-        this.setState({ query: table });
+        await refetchColumns(table);
+        this.setState({ query: table }); // Show the columns.
+        await refetchContents(table);
+        this.setState({ query: table }); // Show the contents.
     }
 
     //React.Children.forEach(children, (each) => console.log("Child: "+each));
@@ -45,16 +46,26 @@ export class Room extends React.Component<RoomProps, RoomState> {
             React.cloneElement(each as React.ReactElement<any>,
                 { table: this.state.query, refetch: this.refetch }));
     }
-}   
-
-
-async function refetch(t: query.Query) {
-    // See https://www.npmjs.com/package/web-request
-    let url = t.url();
-
-    let metadata = WebRequest.get(OData.metadataURL(t._baseURL));
-    OData.setTableColumns(t, (await metadata).content, t._tableName);
-
-    let cells = WebRequest.get(url);
-    OData.setContents(t, (await cells).content);
 }
+
+
+async function refetchColumns(t: query.Query) {
+    fetch(OData.metadataURL(t._baseURL))
+        .then(response => response.text())
+        .then(data => {
+            OData.setTableColumns(t, data, t._tableName);
+        });
+
+    
+}
+
+async function refetchContents(t: query.Query) {
+    fetch(t.url())
+        .then(response2 =>
+            response2.json()
+        )
+        .then(data => {
+            OData.setContents(t, data)
+        });
+}
+

@@ -102,6 +102,10 @@ export class Query {
         }
     }
 
+    get columns() : Array<ColumnDefinition> {
+        return this._select.columns;
+    }
+
     set columns(columns : Array<ColumnDefinition>) {
         this._select.columns = columns;
     }
@@ -201,6 +205,10 @@ export class ComplexColumnDefinition extends ColumnDefinition {
 
     isEmpty() : boolean {
         return this.childColumns.length === 0;
+    }
+
+    get columns() : Array<ColumnDefinition> {
+        return this.childColumns;
     }
 
     set columns(c : Array<ColumnDefinition>) {

@@ -114,8 +114,7 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
 }
 
 /** contents could be JSON or Atom. */
-export function setContents(table: query.Query, contents: string) {
-    let obj = JSON.parse(contents);
+export function setContents(table: query.Query, obj: any) {
     let result: Array<query.Row> = [];
 
     for (let i = 0; i < obj.value.length; i++) {
