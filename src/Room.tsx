@@ -48,24 +48,14 @@ export class Room extends React.Component<RoomProps, RoomState> {
     }
 }
 
-
 async function refetchColumns(t: query.Query) {
-    fetch(OData.metadataURL(t._baseURL))
-        .then(response => response.text())
-        .then(data => {
-            OData.setTableColumns(t, data, t._tableName);
-        });
-
-    
+    let response = fetch(OData.metadataURL(t._baseURL));
+    let data = (await response).text();
+    OData.setTableColumns(t, await data, t._tableName);
 }
 
 async function refetchContents(t: query.Query) {
-    fetch(t.url())
-        .then(response2 =>
-            response2.json()
-        )
-        .then(data => {
-            OData.setContents(t, data)
-        });
+    let response = fetch(t.url());
+    OData.setContents(t, await ((await response).json()));
 }
 
