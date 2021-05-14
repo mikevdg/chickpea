@@ -9,24 +9,28 @@ import './DataTable.css';
 export interface DataTableProps {
     table: query.Query;
     refetch: any; // function. TODO: what is its type?
-    children: never[];    
+    children: never[];
 }
 
 export interface DataTableState {
-    scrollIndex : number;
+    scrollIndex: number;
+    aboveHeight: number;
+    belowHeight: number;
 }
 
 /** I do not have any state. */
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
-    private scrollBar : RefObject<any>;
+    private columnWidths : Array<number>;
 
     constructor(props: Readonly<DataTableProps>) {
         super(props);
+        this.columnWidths = [];
         this.state = {
-            scrollIndex: 0
+            scrollIndex: 0,
+            aboveHeight: 1000,
+            belowHeight: 1000
         }
 
-        this.scrollBar = React.createRef();
 
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
@@ -42,37 +46,70 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         refetch: (() => { })
     }
 
-    render() {
+    render = () => {
+        if (this.columnWidths.length===0) {
+            this.columnWidths = (
+                range(this.props.table.numColumns()).map((a) => 100))
+        }
+
         return (
             <div className="datatable">
-
+                <input value={this.state.scrollIndex} />
                 <div className="datatable-filterdiv">
                     Filter
                 </div>
-
-                <div className="datatable-scrollwrapperdiv">
-                    <div 
-                        className="datatable-scrolldiv" 
-                        onScroll={(event) => this.handleScroll(event)}
-                        ref ={this.scrollBar}>
-                        <div className="datatable-scroll-fakecontents"></div>
-                    </div>
-
-                    <div className="datatable-contentsdiv">
-                        <table className="datatable-table">
-                            <thead className="datatable-head">
-                                {this.renderHeadings()}
-                            </thead>
-                            <tbody>
-                                {this.renderTableContent()}
-                            </tbody>
-                        </table>
-                        <input value={this.state.scrollIndex}/>
-                    </div>
-
+                <div
+                    className="datatable-headerdiv"
+                    style={this.gridStyle()}>
+                    {this.renderHeadings()}
+                </div>
+                <div
+                    className="datatable-contentsdiv"
+                    style={this.gridStyle()}
+                    onScroll={(e) => this.handleScroll(e)}>
+                    {this.aboveHeight()}
+                    {this.renderTableContent()}
+                    {this.belowHeight()}
                 </div>
             </div>
         );
+    }
+
+    aboveHeight = () => {
+        const layout = {
+            height: this.state.aboveHeight,
+            gridRowStart: 1,
+            gridRowEnd: 1,
+            gridColumnStart: 1,
+            gridColumnEnd: 1
+        }
+        return <div style={layout}></div>;
+    }
+
+    belowHeight = () => {
+        const last = 100; // TODO: number of rows.
+        const layout = {
+            height: this.state.belowHeight,
+            gridRowStart: last,
+            gridRowEnd: last,
+            gridColumnStart: last,
+            gridColumnEnd: last
+        }
+        return <div style={layout}></div>;
+    }
+
+    gridStyle = () => {
+        let c =
+            this.columnWidths
+                .map((each) => `${each}px `)
+                .reduce((a, v) => a.concat(v), "");
+
+        console.log(c);
+
+        return {
+            display: 'grid',
+            gridTemplateColumns: c
+        };
     }
 
     renderHeadings(): JSX.Element {
@@ -85,10 +122,11 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             return <React.Fragment> {
 
                 range(mmaxDepth).map(ddepth =>
-                    (<tr>
-                        {this.renderColumnsToHtmlAtDepth(columns, ddepth,
-                            mmaxDepth)}
-                    </tr>))
+                (<React.Fragment>
+                    {this.renderColumnsToHtmlAtDepth(columns, ddepth,
+                        mmaxDepth)}
+                </React.Fragment>
+                ))
             } </React.Fragment>
         }
     }
@@ -100,12 +138,13 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         : JSX.Element {
         return (<React.Fragment>
             {columns.map(
-                each => this.renderColumnToHtml(each, ddepth, mmaxDepth))}
+                (each, i) => this.renderColumnToHtml(each, i, ddepth, mmaxDepth))}
         </React.Fragment>);
     }
 
     renderColumnToHtml(
         column: query.ColumnDefinition,
+        index: number,
         ddepth: number,
         mmaxDepth: number)
         : JSX.Element {
@@ -140,29 +179,45 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                 break;
         }
 
+        const layout = {
+            gridRowStart: ddepth,
+            gridRowEnd: ddepth,
+            gridColumnStart: index,
+            gridColumnEnd: index
+        }
+
         return (<React.Fragment>
             {renderMe.map(each =>
-                <th
+                <div
                     className="datatable-head-cell"
-                    rowSpan={mmaxDepth - column.depth()}>
+                    style={layout}
+                    /*rowSpan={mmaxDepth - column.depth()}*/>
                     {collapse}
                     {each.name}
                     {orderBy}
-                </th>
+                </div>
             )}
         </React.Fragment>);
     }
 
     renderTableContent(): JSX.Element[] {
         return (
-            this.props.table.contents.map((eachRow) =>
-                <tr>
-                    {eachRow.cells.map((eachCell) =>
-                        <td>
+            this.props.table.contents.map((eachRow, row) =>
+                <React.Fragment>
+                    {eachRow.cells.map((eachCell, column) => {
+                        const layout = {
+                            gridRowStart: row+2,
+                            gridRowEnd: row+2,
+                            gridColumnStart: column,
+                            gridColumnEnd: column
+                            
+                        }
+                        return <div className="datatable-cell" style={layout}>
                             {String(eachCell)}
-                        </td>
+                        </div>
+                    }
                     )}
-                </tr>
+                </React.Fragment>
             ));
     }
 
@@ -196,11 +251,11 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         console.log("Unexpand " + column.name);
     }
 
-    handleScroll = (event : React.UIEvent<HTMLDivElement, UIEvent>) => {
+    handleScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
         // TODO: A much better way of doing this is to have hidden divs above
         // and below the content, and resize them.
         // https://codesandbox.io/s/react-virtual-scrolling-basics-u1svg
-        this.setState({scrollIndex: (event.target as any).scrollTop});
+        this.setState({ scrollIndex: (event.target as any).scrollTop });
     }
 }
 

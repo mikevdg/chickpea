@@ -1,5 +1,8 @@
 .datatable {
     border:'1px solid red';
+    position: relative;
+    display: grid;
+    grid-gap: 1px;
 }
 
 .datatable-head {
@@ -18,37 +21,9 @@
     border: 1px solid red;
 }
 
-.datatable-wrapperdiv {
-}
-
-.datatable-scrollwrapperdiv {
-    display:grid;
-    width:800px;
-    height:600px;
-}
-
-.datatable-scrolldiv {
-    overflow-y: scroll;
-    grid-column:1;
-    grid-row:1;
-    z-index:2;
-    /* pointer-events:none; */
-    margin-top:47px;
-    margin-bottom:12px;
-}
-
-.datatable-scroll-fakecontents {
-    height:10000px;
-    width:100%;
-}
-
 .datatable-contentsdiv {
-    overflow-x:auto;
-    overflow-y:hidden;
-    grid-column:1;
-    grid-row:1;
-    z-index:3;
-    margin-right:12px;
+    overflow: auto;
+    height:400px;
 }
 
 .datatable-minibutton {
