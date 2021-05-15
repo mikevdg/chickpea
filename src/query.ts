@@ -216,11 +216,11 @@ export class ComplexColumnDefinition extends ColumnDefinition {
     }
 
     numColumns() : number {
-        let sum=0;
+        let sum=0; 
         for (let i=0; i<this.childColumns.length; i++) {
             sum = sum + this.childColumns[i].numColumns();
         }
-        return sum;
+        return Math.max(1, sum);
     }
 }
 

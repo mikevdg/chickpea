@@ -122,6 +122,9 @@ export function setContents(table: query.Query, obj: any) {
         let currentRow = obj.value[i];
         let totalColumns = table.numColumns();
         for (let j = 0; j < totalColumns; j++) {
+            if(table.columns.length <= j) {
+                console.log(`Out of bounds: ${j}`);
+            }
             current.push(currentRow[table.columns[j].name]);
         }
         result.push({ cells: current });

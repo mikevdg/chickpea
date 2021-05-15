@@ -20,7 +20,7 @@ export interface DataTableState {
 
 /** I do not have any state. */
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
-    private columnWidths : Array<number>;
+    private columnWidths: Array<number>;
 
     constructor(props: Readonly<DataTableProps>) {
         super(props);
@@ -35,8 +35,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
         this.onUnexpandComplexColumn = this.onUnexpandComplexColumn.bind(this);
-        this.renderColumnToHtml = this.renderColumnToHtml.bind(this);
-        this.renderColumnsToHtmlAtDepth = this.renderColumnsToHtmlAtDepth.bind(this);
+        this.renderHeadingToHtml = this.renderHeadingToHtml.bind(this);
+        this.renderHeadingsToHtmlAtDepth = this.renderHeadingsToHtmlAtDepth.bind(this);
         this.renderHeadings = this.renderHeadings.bind(this);
         this.renderTableContent = this.renderTableContent.bind(this);
     }
@@ -47,10 +47,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     render = () => {
-        if (this.columnWidths.length===0) {
-            this.columnWidths = (
-                range(this.props.table.numColumns()).map((a) => 100))
-        }
+        this.columnWidths = (
+            range(this.props.table.numColumns())
+                .map((a) => 100));
 
         return (
             <div className="datatable">
@@ -123,7 +122,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
                 range(mmaxDepth).map(ddepth =>
                 (<React.Fragment>
-                    {this.renderColumnsToHtmlAtDepth(columns, ddepth,
+                    {this.renderHeadingsToHtmlAtDepth(columns, ddepth,
                         mmaxDepth)}
                 </React.Fragment>
                 ))
@@ -131,18 +130,23 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         }
     }
 
-    renderColumnsToHtmlAtDepth(
+    renderHeadingsToHtmlAtDepth(
         columns: query.ComplexColumnDefinition,
         ddepth: number,
         mmaxDepth: number)
         : JSX.Element {
+
         return (<React.Fragment>
             {columns.map(
-                (each, i) => this.renderColumnToHtml(each, i, ddepth, mmaxDepth))}
+                (each, i) => 
+                    this.renderHeadingToHtml(
+                        each, i, ddepth, mmaxDepth)
+                )
+            }
         </React.Fragment>);
     }
 
-    renderColumnToHtml(
+    renderHeadingToHtml(
         column: query.ColumnDefinition,
         index: number,
         ddepth: number,
@@ -182,13 +186,14 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         const layout = {
             gridRowStart: ddepth,
             gridRowEnd: ddepth,
-            gridColumnStart: index,
-            gridColumnEnd: index
+            gridColumnStart: index + 1,
+            gridColumnEnd: index + 1
         }
 
         return (<React.Fragment>
-            {renderMe.map(each =>
-                <div
+            {renderMe.map(each => {
+                console.log(`Rendering ${ddepth} ${index} for ${each.name}`);
+                return <div
                     className="datatable-head-cell"
                     style={layout}
                     /*rowSpan={mmaxDepth - column.depth()}*/>
@@ -196,6 +201,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                     {each.name}
                     {orderBy}
                 </div>
+            }
             )}
         </React.Fragment>);
     }
@@ -206,11 +212,12 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                 <React.Fragment>
                     {eachRow.cells.map((eachCell, column) => {
                         const layout = {
-                            gridRowStart: row+2,
-                            gridRowEnd: row+2,
+                            gridRowStart: row + 2,
+                            gridRowEnd: row + 2,
                             gridColumnStart: column,
-                            gridColumnEnd: column
-                            
+                            gridColumnEnd: column,
+                            overflow: 'hidden'
+
                         }
                         return <div className="datatable-cell" style={layout}>
                             {String(eachCell)}
