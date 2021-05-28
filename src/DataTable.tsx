@@ -211,15 +211,15 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             this.props.table.contents.map((eachRow, row) =>
                 <React.Fragment>
                     {eachRow.cells.map((eachCell, column) => {
-                        const layout = {
+                        const layout : React.CSSProperties = {
+                            overflowX: "hidden",
+                            height: "2em",
                             gridRowStart: row + 2,
                             gridRowEnd: row + 2,
                             gridColumnStart: column,
-                            gridColumnEnd: column,
-                            overflow: 'hidden'
-
+                            gridColumnEnd: column
                         }
-                        return <div className="datatable-cell" style={layout}>
+                        return <div style={layout}>
                             {String(eachCell)}
                         </div>
                     }
