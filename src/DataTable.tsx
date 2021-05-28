@@ -21,7 +21,7 @@ export interface DataTableState {
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
     private columnWidths: Array<number>;
     private contentDivRef : React.RefObject<HTMLDivElement>;
-    private height : number = 1;
+    private height : number = 100;
     private pixelsPerRow : number = 30;
     private numVisibleRows : number = 100;
 
@@ -56,11 +56,11 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         let firstVisibleRow = this.firstVisibleRow();
         let aboveHeight = firstVisibleRow * this.pixelsPerRow;
-        let numRows = this.props.table.count();
+        let numRows = 512; // this.props.table.count();
         let belowHeight = (numRows - firstVisibleRow - this.numVisibleRows) * this.pixelsPerRow;
 
         console.log(`aboveHeight ${aboveHeight} belowHeight ${belowHeight} scrollY ${this.state.scrollY} firstVisibleRow ${firstVisibleRow}`);
-        console.log(`total height: ${aboveHeight+belowHeight}`);
+        console.log(`height: ${this.height} total height: ${aboveHeight+belowHeight} numVisible: ${this.numVisibleRows}`);
 
         return (
             <div className="datatable">
@@ -90,7 +90,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         console.log("componentDidMount");
         if (null !== this.contentDivRef.current) {
             this.height = this.contentDivRef.current.clientHeight;
-            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow);
+            // Plus 2 - one to counteract Math.floor, one to cover the gap at the bottom.
+            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+2;
         }
     }
 
@@ -109,10 +110,10 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         const last = this.numVisibleRows;
         const layout = {
             height: height,
-            gridRowStart: last,
-            gridRowEnd: last,
-            gridColumnStart: last,
-            gridColumnEnd: last
+            gridRowStart: last+2,
+            gridRowEnd: last+2,
+            gridColumnStart: 1,
+            gridColumnEnd: 1
         }
         return <div style={layout}></div>;
     }
@@ -125,7 +126,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         return {
             display: 'grid',
-            gridTemplateColumns: c
+            gridTemplateColumns: c,
+            backgroundColor: "blue"
         };
     }
 
@@ -223,8 +225,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     firstVisibleRow = () => {
-        // TODO: until the window is resized, pixelsPerRow is constant.
-        return Math.floor(this.state.scrollY / this.pixelsPerRow) - 1;
+        return Math.floor(this.state.scrollY / this.pixelsPerRow);
     }
 
     renderTableContent(): JSX.Element[] {
@@ -235,6 +236,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         rows = rows.concat(rows);
         rows = rows.concat(rows);
         rows = rows.concat(rows);
+        console.log(`num rows: ${rows.length}`);
 
         let firstVisibleRow = this.firstVisibleRow();
         let visibleRows = rows.slice(
@@ -250,8 +252,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                             height: this.pixelsPerRow,
                             gridRowStart: row + 2,
                             gridRowEnd: row + 2,
-                            gridColumnStart: column,
-                            gridColumnEnd: column                            
+                            gridColumnStart: column+1,
+                            gridColumnEnd: column+1,
+                            backgroundColor: "red"                           
                         }
                         return <div style={layout}>
                             {String(eachCell)}
