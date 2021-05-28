@@ -117,6 +117,11 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
 export function setContents(table: query.Query, obj: any) {
     let result: Array<query.Row> = [];
 
+    if (undefined==obj.value) {
+        console.log("odata.ts: obj.value is undefined.");
+        return;
+    }
+
     for (let i = 0; i < obj.value.length; i++) {
         let current: Array<string> = []; // TODO: multiple types.
         let currentRow = obj.value[i];

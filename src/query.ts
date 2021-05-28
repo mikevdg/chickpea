@@ -65,6 +65,12 @@ export class Query {
         this._contents = c;
     }
 
+    count = () => {
+        // TODO
+        //return this._contents.length;
+        return 50000;
+    }
+
     expand(column: ColumnDefinition) {
         //this._query._expand.add(column);
         return this;

@@ -1,10 +1,11 @@
-import React, { RefObject } from 'react';
-
+import React from 'react';
 import * as query from './query';
-
-
 import './App.css';
 import './DataTable.css';
+
+// TODO If the size of the contents div changes:
+//  https://www.pluralsight.com/guides/re-render-react-component-on-window-resize
+
 
 export interface DataTableProps {
     table: query.Query;
@@ -13,24 +14,24 @@ export interface DataTableProps {
 }
 
 export interface DataTableState {
-    scrollIndex: number;
-    aboveHeight: number;
-    belowHeight: number;
+    scrollY: number;
 }
 
 /** I do not have any state. */
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
     private columnWidths: Array<number>;
+    private contentDivRef : React.RefObject<HTMLDivElement>;
+    private height : number = 1;
+    private pixelsPerRow : number = 30;
+    private numVisibleRows : number = 100;
 
     constructor(props: Readonly<DataTableProps>) {
         super(props);
         this.columnWidths = [];
         this.state = {
-            scrollIndex: 0,
-            aboveHeight: 1000,
-            belowHeight: 1000
-        }
-
+            scrollY: 0
+        };
+        this.contentDivRef = React.createRef();
 
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
@@ -47,13 +48,23 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     render = () => {
+        console.log("render");
+
         this.columnWidths = (
             range(this.props.table.numColumns())
                 .map((a) => 100));
 
+        let firstVisibleRow = this.firstVisibleRow();
+        let aboveHeight = firstVisibleRow * this.pixelsPerRow;
+        let numRows = this.props.table.count();
+        let belowHeight = (numRows - firstVisibleRow - this.numVisibleRows) * this.pixelsPerRow;
+
+        console.log(`aboveHeight ${aboveHeight} belowHeight ${belowHeight} scrollY ${this.state.scrollY} firstVisibleRow ${firstVisibleRow}`);
+        console.log(`total height: ${aboveHeight+belowHeight}`);
+
         return (
             <div className="datatable">
-                <input value={this.state.scrollIndex} />
+                <input value={this.state.scrollY} />
                 <div className="datatable-filterdiv">
                     Filter
                 </div>
@@ -65,18 +76,27 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                 <div
                     className="datatable-contentsdiv"
                     style={this.gridStyle()}
-                    onScroll={(e) => this.handleScroll(e)}>
-                    {this.aboveHeight()}
+                    onScroll={(e) => this.handleScroll(e)}
+                    ref={this.contentDivRef}>
+                    {this.aboveHeight(aboveHeight)}
                     {this.renderTableContent()}
-                    {this.belowHeight()}
+                    {this.belowHeight(belowHeight)}
                 </div>
             </div>
         );
     }
 
-    aboveHeight = () => {
+    componentDidMount = () => {
+        console.log("componentDidMount");
+        if (null !== this.contentDivRef.current) {
+            this.height = this.contentDivRef.current.clientHeight;
+            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow);
+        }
+    }
+
+    aboveHeight = (height : number ) => {
         const layout = {
-            height: this.state.aboveHeight,
+            height: height,
             gridRowStart: 1,
             gridRowEnd: 1,
             gridColumnStart: 1,
@@ -85,10 +105,10 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         return <div style={layout}></div>;
     }
 
-    belowHeight = () => {
-        const last = 100; // TODO: number of rows.
+    belowHeight = (height: number) => {
+        const last = this.numVisibleRows;
         const layout = {
-            height: this.state.belowHeight,
+            height: height,
             gridRowStart: last,
             gridRowEnd: last,
             gridColumnStart: last,
@@ -102,8 +122,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             this.columnWidths
                 .map((each) => `${each}px `)
                 .reduce((a, v) => a.concat(v), "");
-
-        console.log(c);
 
         return {
             display: 'grid',
@@ -119,7 +137,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             return <React.Fragment />
         } else {
             return <React.Fragment> {
-
                 range(mmaxDepth).map(ddepth =>
                 (<React.Fragment>
                     {this.renderHeadingsToHtmlAtDepth(columns, ddepth,
@@ -192,7 +209,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         return (<React.Fragment>
             {renderMe.map(each => {
-                console.log(`Rendering ${ddepth} ${index} for ${each.name}`);
                 return <div
                     className="datatable-head-cell"
                     style={layout}
@@ -206,18 +222,36 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         </React.Fragment>);
     }
 
+    firstVisibleRow = () => {
+        // TODO: until the window is resized, pixelsPerRow is constant.
+        return Math.floor(this.state.scrollY / this.pixelsPerRow) - 1;
+    }
+
     renderTableContent(): JSX.Element[] {
+        let rows = this.props.table.contents;
+        rows = rows.concat(rows);
+        rows = rows.concat(rows);
+        rows = rows.concat(rows);
+        rows = rows.concat(rows);
+        rows = rows.concat(rows);
+        rows = rows.concat(rows);
+
+        let firstVisibleRow = this.firstVisibleRow();
+        let visibleRows = rows.slice(
+            firstVisibleRow,
+            firstVisibleRow+this.numVisibleRows);
+
         return (
-            this.props.table.contents.map((eachRow, row) =>
+            visibleRows.map((eachRow, row) =>
                 <React.Fragment>
                     {eachRow.cells.map((eachCell, column) => {
                         const layout : React.CSSProperties = {
                             overflowX: "hidden",
-                            height: "2em",
+                            height: this.pixelsPerRow,
                             gridRowStart: row + 2,
                             gridRowEnd: row + 2,
                             gridColumnStart: column,
-                            gridColumnEnd: column
+                            gridColumnEnd: column                            
                         }
                         return <div style={layout}>
                             {String(eachCell)}
@@ -262,7 +296,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         // TODO: A much better way of doing this is to have hidden divs above
         // and below the content, and resize them.
         // https://codesandbox.io/s/react-virtual-scrolling-basics-u1svg
-        this.setState({ scrollIndex: (event.target as any).scrollTop });
+        console.log("handleScroll");
+        this.setState({ scrollY: (event.target as any).scrollTop });
     }
 }
 
