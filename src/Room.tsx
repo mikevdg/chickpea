@@ -1,8 +1,6 @@
 import React from 'react';
 import * as query from './query';
 
-import * as OData from './odata/odata';
-
 /* A room contains the state of a table - the data, a list of edits, the selected row, the selected column, etc.
 
 You put DataTables and other components inside me.
@@ -33,9 +31,9 @@ export class Room extends React.Component<RoomProps, RoomState> {
     }
 
     async refetch(table: query.Query) {
-        await refetchColumns(table);
+        await table.refetchColumns();
         this.setState({ query: table }); // Show the columns.
-        await refetchContents(table);
+        await table.refetchContents();
         this.setState({ query: table }); // Show the contents.
     }
 
@@ -47,15 +45,3 @@ export class Room extends React.Component<RoomProps, RoomState> {
                 { table: this.state.query, refetch: this.refetch }));
     }
 }
-
-async function refetchColumns(t: query.Query) {
-    let response = fetch(OData.metadataURL(t._baseURL));
-    let data = (await response).text();
-    OData.setTableColumns(t, await data, t._tableName);
-}
-
-async function refetchContents(t: query.Query) {
-    let response = fetch(t.url());
-    OData.setContents(t, await ((await response).json()));
-}
-

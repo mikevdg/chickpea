@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataTable } from './DataTable';
+import { DataTable, range } from './DataTable';
 import { Room } from './Room';
 import * as query from './query';
 
@@ -12,7 +12,8 @@ class App extends React.Component {
   readonly tableName = 'People';
   
   render() {
-    let q : query.Query = query.Query.create(this.url, this.tableName);
+    //let q : query.Query = query.ODataQuery.create(this.url, this.tableName);
+    let q : query.Query = new query.CollectionQuery([{name:'foo'}], range(500).map(each => [each]));
 
     return (
       <div className="App">

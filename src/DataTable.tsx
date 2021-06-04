@@ -21,7 +21,7 @@ export interface DataTableState {
 // What percentage of rows to buffer off-screen. 0.5 = 50% of visible rows.
 const offscreenRowBufferSizePercent : number = 0.5;
 // What percentage of rows can we scroll before we render()?
-const offscreenRowScrollTolerancePercent : number = 0.4;
+const offscreenRowScrollTolerancePercent : number = 0.2;
 
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
     // What percentage (actually 0 to 1) of rows to render off-screen as a buffer.
@@ -56,7 +56,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     public static defaultProps = {
-        table: (query.Query.create("", "")), // TODO: "Loading..."
+        table: (new query.CollectionQuery([], [])),
         refetch: (() => { })
     }
 
@@ -114,7 +114,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     private renderHeadings(): JSX.Element {
-        let columns: query.ComplexColumnDefinition = this.props.table._select;
+        let columns: query.ComplexColumnDefinition = this.props.table.select;
         let mmaxDepth: number = columns.depth();
 
         if (columns.isEmpty()) {
@@ -207,18 +207,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     }
 
     private renderTableContent(): JSX.Element[] {
-        let rows = this.props.table.contents;
-        rows = rows.concat(rows);
-        rows = rows.concat(rows);
-        rows = rows.concat(rows);
-        rows = rows.concat(rows);
-        rows = rows.concat(rows);
-        rows = rows.concat(rows);
-
-        let visibleRows = rows.slice(this.firstRenderedRow, this.lastRenderedRow);
-
+        let rows = this.props.table.get(this.firstRenderedRow, this.lastRenderedRow);
         return (
-            visibleRows.map((eachRow, row) =>
+            rows.map((eachRow, row) =>
                 <React.Fragment>
                     {eachRow.cells.map((eachCell, column) => {
                         const layout : React.CSSProperties = {
@@ -372,7 +363,7 @@ function columnAtDepth(
     }
 }
 
-function range(to: number) {
+export function range(to: number) {
     let result = Array.from(Array(to + 1).keys());
     result.shift(); // Remove the zero.
     return result;
