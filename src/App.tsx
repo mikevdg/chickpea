@@ -13,7 +13,7 @@ class App extends React.Component {
   
   render() {
     //let q : query.Query = query.ODataQuery.create(this.url, this.tableName);
-    let q : query.Query = new query.CollectionQuery([{name:'foo'}], range(500).map(each => [each]));
+    let q : query.Query = new query.CollectionQuery([{name:'foo'}], range(50000).map(each => [each]));
 
     return (
       <div className="App">

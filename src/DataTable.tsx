@@ -18,11 +18,6 @@ export interface DataTableState {
     
 }
 
-// What percentage of rows to buffer off-screen. 0.5 = 50% of visible rows.
-const offscreenRowBufferSizePercent : number = 0.5;
-// What percentage of rows can we scroll before we render()?
-const offscreenRowScrollTolerancePercent : number = 0.2;
-
 export class DataTable extends React.Component<DataTableProps, DataTableState> {
     // What percentage (actually 0 to 1) of rows to render off-screen as a buffer.
 
@@ -68,11 +63,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         this.firstRenderedRow = this.state.firstVisibleRow;
         this.lastRenderedRow = this.state.firstVisibleRow + this.numVisibleRows + 2;
-
-        let innerContentStyle = {
-            height: this.pixelsPerRow*this.numRows,
-            transform: `translateY(${this.state.firstVisibleRow*this.pixelsPerRow}px)`
-        };
 
         return (
             <div className="datatable">
@@ -232,10 +222,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             ));
     }
 
-    private numberOfRowsToBuffer = () => {
-        return Math.floor(this.numVisibleRows * offscreenRowBufferSizePercent);
-    }
-
     private onOrderBy(
         event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
         t: query.Query,
@@ -270,23 +256,9 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
     handleScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
         let scrollY = (event.target as any).scrollTop;
         let currentTopVisibleRow = Math.floor(scrollY / this.pixelsPerRow);
-        //if (this.userHasScrolledTooFar(currentTopVisibleRow)) {
-            this.setState({ firstVisibleRow: currentTopVisibleRow });
-        //}
+        this.setState({ firstVisibleRow: currentTopVisibleRow });
     }
 
-    /* Return true if the user scrolls too far. */
-    private userHasScrolledTooFar : (currentTopVisibleRow: number) => boolean 
-        = (currentTopVisibleRow) => {
-            // I'm measuring tolerance from the edges.
-            let tolerance = (offscreenRowBufferSizePercent - offscreenRowScrollTolerancePercent) * this.numVisibleRows;
-            let toleranceTop = (this.firstRenderedRow<tolerance) ? 0 : this.firstRenderedRow + tolerance;
-            // TODO: I think there's an off-by-one error here:
-            let toleranceBottom = (this.numRows-this.lastRenderedRow<tolerance) ? this.numRows : this.lastRenderedRow - tolerance;
-
-            return currentTopVisibleRow < toleranceTop
-                || currentTopVisibleRow+this.numVisibleRows > toleranceBottom;
-    }
 
     componentDidMount : () => void = () => {
         console.log("componentDidMount");
@@ -295,35 +267,6 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             // Plus 2 - one to counteract Math.floor, one to cover the gap at the bottom.
             this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+1;
         }
-    }
-
-    /** Render a "filler" div above the visible table contents to make 
-     * virtual scrolling happen. */
-    private fillerDivAbove : (height: number) => JSX.Element 
-        = (height : number ) => {
-        const layout = {
-            height: height,
-            gridRowStart: 1,
-            gridRowEnd: 1,
-            gridColumnStart: 1,
-            gridColumnEnd: 1
-        }
-        return <div style={layout}></div>;
-    }
-
-    /** Render a "filler" div below the visible table contents to make 
-     * virtual scrolling happen. */
-     private fillerDivBelow : (height: number) => JSX.Element 
-        = (height: number) => {
-        const last = this.lastRenderedRow;
-        const layout = {
-            height: height,
-            gridRowStart: last+2,
-            gridRowEnd: last+2,
-            gridColumnStart: 1,
-            gridColumnEnd: 1
-        }
-        return <div style={layout}></div>;
     }
 }
 
