@@ -16,7 +16,6 @@ class App extends React.Component {
 
     return (
       <div className="App">
-        // TODO: The room needs a whole query as input somehow: 
         <Room query={q}>
           <DataTable>
           </DataTable>

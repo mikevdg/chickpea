@@ -54,7 +54,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             range(this.props.table.numColumns())
                 .map((a) => 100));
 
-        let firstVisibleRow = this.firstVisibleRow();
+        let firstVisibleRow = Math.max(0, this.firstVisibleRow()-10);
         let aboveHeight = firstVisibleRow * this.pixelsPerRow;
         let numRows = 512; // this.props.table.count();
         let belowHeight = (numRows - firstVisibleRow - this.numVisibleRows) * this.pixelsPerRow;
@@ -91,7 +91,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         if (null !== this.contentDivRef.current) {
             this.height = this.contentDivRef.current.clientHeight;
             // Plus 2 - one to counteract Math.floor, one to cover the gap at the bottom.
-            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+2;
+            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+20;
         }
     }
 
@@ -256,7 +256,8 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                             gridColumnEnd: column+1,
                             backgroundColor: "red"                           
                         }
-                        return <div style={layout}>
+                        return <div key={`R${row}C${column}`}
+                            style={layout}>
                             {String(eachCell)}
                         </div>
                     }

@@ -89,7 +89,6 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
 {
     let name: string;
     let typeString: string;
-    let isCollection: boolean = false;
 
     // Pull out the name.
     name = node.getAttribute("Name") ?? "Unnamed Column";
@@ -98,7 +97,6 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
     // Is it a collection?
     const collection = "Collection(";
     if (typeString.startsWith(collection)) {
-        isCollection = true;
         typeString = typeString.substring(collection.length, typeString.length);
         if (typeString.endsWith(")")) {
             typeString = typeString.substring(0, typeString.length - 1);
@@ -117,7 +115,7 @@ function createColumnFrom(node: Element, namespace: string, metadata: Document) 
 export function setContents(table: query.Query, obj: any) {
     let result: Array<query.Row> = [];
 
-    if (undefined==obj.value) {
+    if (undefined===obj.value) {
         console.log("odata.ts: obj.value is undefined.");
         return;
     }

@@ -1,6 +1,13 @@
 /* A "Query" is the model for a data table on the screen. It contains all the state of a query, plus the contents of the current screen-full of data. 
 */
 
+export enum OrderedBy {
+    ASC,
+    DESC,
+    NA
+}
+
+
 export class Query {
     _baseURL: string;
     _tableName: string;
@@ -229,11 +236,6 @@ export class ComplexColumnDefinition extends ColumnDefinition {
     }
 }
 
-export enum OrderedBy {
-    ASC,
-    DESC,
-    NA
-}
 
 /* This list is from the OData XML or JSON specs:
 https://docs.oasis-open.org/odata/odata-csdl-xml/v4.01/odata-csdl-xml-v4.01.html
