@@ -33,7 +33,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
     // Managing virtual scrolling:
     private pixelsPerRow : number = 30; 
-    private numVisibleRows : number = 100; // Should be height/pixelsPerRow
+    private numVisibleRows : number = 3; // Should be height/pixelsPerRow
     private firstRenderedRow: number=0; // Off-screen, the first row we render.
     private lastRenderedRow: number=0; // Off-screen, the last row we render.
     private numRows: number = 1;
@@ -45,6 +45,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             firstVisibleRow: 0
         };
         this.contentDivRef = React.createRef();
+        this.numRows = props.table.count();
 
         this.onOrderBy = this.onOrderBy.bind(this);
         this.onExpandComplexColumn = this.onExpandComplexColumn.bind(this);
@@ -65,20 +66,18 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
             range(this.props.table.numColumns())
                 .map((a) => 100));
 
-        this.numRows = 512; // this.props.table.count();
+        this.firstRenderedRow = this.state.firstVisibleRow;
+        this.lastRenderedRow = this.state.firstVisibleRow + this.numVisibleRows + 2;
 
-        this.firstRenderedRow = Math.max(0, this.state.firstVisibleRow - this.numberOfRowsToBuffer());
-        this.lastRenderedRow = Math.min(
-            this.numRows,
-            this.state.firstVisibleRow + this.numVisibleRows + this.numberOfRowsToBuffer());
-        
-        let aboveHeight = this.firstRenderedRow * this.pixelsPerRow;
-
-        let belowHeight = (this.numRows - this.lastRenderedRow) * this.pixelsPerRow;
+        let innerContentStyle = {
+            height: this.pixelsPerRow*this.numRows,
+            transform: `translateY(${this.state.firstVisibleRow*this.pixelsPerRow}px)`
+        };
 
         return (
             <div className="datatable">
                 <input readOnly={true} value={this.state.firstVisibleRow} />
+                <input readOnly={true} value={this.numRows}/>
                 <div className="datatable-filterdiv">
                     Filter
                 </div>
@@ -92,9 +91,11 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                     style={this.gridStyle()}
                     onScroll={(e) => this.handleScroll(e)}
                     ref={this.contentDivRef}>
-                    {this.fillerDivAbove(aboveHeight)}
-                    {this.renderTableContent()}
-                    {this.fillerDivBelow(belowHeight)}
+                    <div style={{height: this.pixelsPerRow * this.numRows}}>
+                        <div style={{transform: `translateY(${this.state.firstVisibleRow*this.pixelsPerRow}px)`}}>
+                            {this.renderTableContent()}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -210,13 +211,13 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         let rows = this.props.table.get(this.firstRenderedRow, this.lastRenderedRow);
         return (
             rows.map((eachRow, row) =>
-                <React.Fragment>
+                <>
                     {eachRow.cells.map((eachCell, column) => {
                         const layout : React.CSSProperties = {
                             overflowX: "hidden",
                             height: this.pixelsPerRow,
-                            gridRowStart: row + 2,
-                            gridRowEnd: row + 2,
+                            gridRowStart: row + 1,
+                            gridRowEnd: row + 1,
                             gridColumnStart: column+1,
                             gridColumnEnd: column+1,
                             backgroundColor: "red"                           
@@ -227,7 +228,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                         </div>
                     }
                     )}
-                </React.Fragment>
+                </>
             ));
     }
 
@@ -265,29 +266,13 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         console.log("Unexpand " + column.name);
     }
 
-    /* Infinite scrolling functionality.
-       -----------------------------------
-
-    This is implemented by having:
-
-    <div overflow=scroll onscroll=... >
-      <div height=HUGE/>  - rendered by aboveHeight().
-      <only the visible rows/>
-      <div height=HUGE/> - rendered by belowHeight().
-    </div>
-
-    The scroll handler on the outer div resizes the filler divs.
-
-    Now - there are issues. If you resize contents while scrolling, you get another scroll event which can cause an infinite loop. To prevent this, we have an amount of leeway so that quite a bit of scrolling can happen before we need to resize anything, and then we hope the user doesn't notice the extra scroll event.
-
-    */
 
     handleScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
         let scrollY = (event.target as any).scrollTop;
         let currentTopVisibleRow = Math.floor(scrollY / this.pixelsPerRow);
-        if (this.userHasScrolledTooFar(currentTopVisibleRow)) {
+        //if (this.userHasScrolledTooFar(currentTopVisibleRow)) {
             this.setState({ firstVisibleRow: currentTopVisibleRow });
-        }
+        //}
     }
 
     /* Return true if the user scrolls too far. */
@@ -308,7 +293,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         if (null !== this.contentDivRef.current) {
             this.height = this.contentDivRef.current.clientHeight;
             // Plus 2 - one to counteract Math.floor, one to cover the gap at the bottom.
-            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+20;
+            this.numVisibleRows = Math.floor(this.height / this.pixelsPerRow)+1;
         }
     }
 
