@@ -12,8 +12,10 @@ class App extends React.Component {
   readonly tableName = 'People';
   
   render() {
-    //let q : query.Query = query.ODataQuery.create(this.url, this.tableName);
-    let q : query.Query = new query.CollectionQuery([{name:'foo'}], range(50000).map(each => [each]));
+    let q : query.Query = query.ODataQuery.create(this.url, this.tableName);
+    /*let q : query.Query = new query.CollectionQuery(
+      [{name:'foo'}, {name: 'bar'}, {name: 'baz'}], 
+      range(20000).map(each => [each, each+100, each+10000]));*/
 
     return (
       <div className="App">

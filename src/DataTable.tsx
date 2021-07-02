@@ -66,23 +66,36 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
 
         return (
             <div className="datatable">
-                <input readOnly={true} value={this.state.firstVisibleRow} />
-                <input readOnly={true} value={this.numRows}/>
+                {/* Debugging */}<input readOnly={true} value={this.state.firstVisibleRow} />
+                {/* Debugging */}<input readOnly={true} value={this.numRows}/>
+                
+                {/* The "filter" box above the table. */}
                 <div className="datatable-filterdiv">
                     Filter
                 </div>
+
+                {/* The column headings. */}
                 <div
                     className="datatable-headerdiv"
                     style={this.gridStyle()}>
                     {this.renderHeadings()}
                 </div>
+
+                {/* The scroll bar. */}
                 <div
                     className="datatable-contentsdiv"
                     style={this.gridStyle()}
                     onScroll={(e) => this.handleScroll(e)}
                     ref={this.contentDivRef}>
+                    
+                    {/* The enourmous div to make the scroll bar happen. */}
                     <div style={{height: this.pixelsPerRow * this.numRows}}>
-                        <div style={{transform: `translateY(${this.state.firstVisibleRow*this.pixelsPerRow}px)`}}>
+
+                        {/* Only the currently visible rows. */}
+                        <div style={{
+                            ...this.gridStyle(),
+                            transform: `translateY(${this.state.firstVisibleRow*this.pixelsPerRow}px)`
+                        }}>
                             {this.renderTableContent()}
                         </div>
                     </div>
@@ -197,6 +210,7 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
         </React.Fragment>);
     }
 
+    /** Render only the visible cells. */
     private renderTableContent(): JSX.Element[] {
         let rows = this.props.table.get(this.firstRenderedRow, this.lastRenderedRow);
         return (
@@ -210,16 +224,30 @@ export class DataTable extends React.Component<DataTableProps, DataTableState> {
                             gridRowEnd: row + 1,
                             gridColumnStart: column+1,
                             gridColumnEnd: column+1,
-                            backgroundColor: "red"                           
+                            whiteSpace: 'nowrap',
+                            backgroundColor: "red"                         
                         }
                         return <div key={`R${row}C${column}`}
                             style={layout}>
-                            {String(eachCell)}
+                            {this.asString(eachCell)}
                         </div>
                     }
                     )}
                 </>
             ));
+    }
+
+    private asString(o : any) : string {
+        if ("object"===typeof o) {
+            let v = Object.values(o);
+            if (v.length > 0) {
+                return this.asString(Object.values(o)[0]);
+            } else {
+                return "";
+            }
+        } else {
+            return String(o);
+        }
     }
 
     private onOrderBy(
