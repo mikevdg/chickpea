@@ -103,7 +103,7 @@ abstract class AbstractQuery implements Query {
         return this;
     }
 
-    get name() { return this.name; }
+    get name() { return this._tableName; }
 
     set name(tableName: string) {
         this._tableName = tableName;
@@ -253,6 +253,7 @@ export class ODataQuery extends AbstractQuery {
 
     set contents(c: Array<Row>) {
         this._contents = c;
+        console.log(`Got ${this._contents.length} elements.`);
     }
 
     get columns() : Array<ColumnDefinition> {
@@ -270,8 +271,9 @@ export class ODataQuery extends AbstractQuery {
 
     get: (from: number, to: number) => Row[] = 
     (from: number, to: number) => {
+        console.log(`Getting from ${from} to ${to}`);
         return this._contents.slice(from, to);
-}
+    }
 }
 
 interface OrderedByEntry {
